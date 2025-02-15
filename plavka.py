@@ -122,55 +122,117 @@ class MainWindow(QWidget):
         super().__init__()
         self.setWindowTitle("Электронный журнал плавки")
         
-        # Устанавливаем темный фон для главного окна
+        # Устанавливаем светлый фон в стиле Nord
         self.setStyleSheet("""
             QWidget {
-                background-color: #1a1a1a;
-                color: #fff;
+                background-color: #eceff4;
+                color: #2e3440;
+                font-family: 'Segoe UI', Arial, sans-serif;
             }
             QPushButton {
-                background-color: #00b3b3;
+                background-color: #5e81ac;
+                color: #ffffff;
                 border: none;
-                border-radius: 5px;
-                padding: 8px;
-                color: white;
-                min-width: 100px;
+                border-radius: 4px;
+                padding: 8px 16px;
+                font-size: 14px;
+                font-weight: bold;
+                min-width: 120px;
             }
             QPushButton:hover {
-                background-color: #00cccc;
+                background-color: #81a1c1;
             }
-            QLineEdit, QDateEdit, QComboBox {
-                background-color: #333333;
-                border: 2px solid #00b3b3;
-                border-radius: 5px;
-                padding: 5px;
-                color: white;
+            QPushButton:pressed {
+                background-color: #4c566a;
+            }
+            QLineEdit, QDateEdit, QComboBox, QTextEdit {
+                background-color: #ffffff;
+                color: #2e3440;
+                border: 2px solid #d8dee9;
+                border-radius: 4px;
+                padding: 6px;
                 min-width: 150px;
+                font-size: 13px;
+            }
+            QLineEdit:focus, QDateEdit:focus, QComboBox:focus, QTextEdit:focus {
+                border: 2px solid #5e81ac;
+            }
+            QComboBox::drop-down {
+                border: none;
+                width: 20px;
+            }
+            QComboBox::down-arrow {
+                image: none;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 5px solid #4c566a;
+                width: 0;
+                height: 0;
+                margin-right: 5px;
             }
             QGroupBox {
-                border: 2px solid #00b3b3;
-                border-radius: 5px;
+                border: 2px solid #d8dee9;
+                border-radius: 6px;
                 margin-top: 1em;
-                padding-top: 10px;
                 padding: 15px;
+                font-size: 14px;
+                font-weight: bold;
+                background-color: #e5e9f0;
             }
             QGroupBox::title {
-                color: #00b3b3;
+                color: #5e81ac;
                 subcontrol-origin: margin;
                 left: 10px;
-                padding: 0 3px 0 3px;
+                padding: 0 5px;
             }
             QLabel {
-                color: #00b3b3;
+                color: #2e3440;
+                font-size: 13px;
                 min-width: 120px;
             }
             QTextEdit {
-                background-color: #333333;
-                border: 2px solid #00b3b3;
+                min-height: 80px;
+            }
+            /* Стили для полей с температурой */
+            QLineEdit[temperature="true"] {
+                color: #bf616a;
+                font-weight: bold;
+                background-color: #fff0f0;
+            }
+            /* Стили для полей со временем */
+            QLineEdit[time="true"] {
+                color: #2e7d32;
+                background-color: #f0fff0;
+            }
+            /* Стили для заголовков секторов */
+            QGroupBox[sector="true"] {
+                background-color: #e5e9f0;
+            }
+            QGroupBox[sector="true"]::title {
+                color: #5e81ac;
+                font-size: 15px;
+            }
+            /* Скроллбары */
+            QScrollBar:vertical {
+                border: none;
+                background-color: #e5e9f0;
+                width: 10px;
+                margin: 0;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #81a1c1;
                 border-radius: 5px;
-                padding: 5px;
-                color: white;
-                min-height: 60px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #5e81ac;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                height: 0;
+                background: none;
+            }
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+                background: none;
             }
         """)
         
@@ -254,6 +316,7 @@ class MainWindow(QWidget):
         
         # Сектор A
         sector_a_group = QGroupBox("Сектор A")
+        sector_a_group.setProperty("sector", "true")
         sector_a_layout = QGridLayout()
         sector_a_layout.addWidget(QLabel("Время прогрева:"), 0, 0)
         sector_a_layout.addWidget(self.Плавка_время_прогрева_ковша_A, 0, 1)
@@ -268,6 +331,7 @@ class MainWindow(QWidget):
 
         # Сектор B
         sector_b_group = QGroupBox("Сектор B")
+        sector_b_group.setProperty("sector", "true")
         sector_b_layout = QGridLayout()
         sector_b_layout.addWidget(QLabel("Время прогрева:"), 0, 0)
         sector_b_layout.addWidget(self.Плавка_время_прогрева_ковша_B, 0, 1)
@@ -282,6 +346,7 @@ class MainWindow(QWidget):
 
         # Сектор C
         sector_c_group = QGroupBox("Сектор C")
+        sector_c_group.setProperty("sector", "true")
         sector_c_layout = QGridLayout()
         sector_c_layout.addWidget(QLabel("Время прогрева:"), 0, 0)
         sector_c_layout.addWidget(self.Плавка_время_прогрева_ковша_C, 0, 1)
@@ -296,6 +361,7 @@ class MainWindow(QWidget):
 
         # Сектор D
         sector_d_group = QGroupBox("Сектор D")
+        sector_d_group.setProperty("sector", "true")
         sector_d_layout = QGridLayout()
         sector_d_layout.addWidget(QLabel("Время прогрева:"), 0, 0)
         sector_d_layout.addWidget(self.Плавка_время_прогрева_ковша_D, 0, 1)
@@ -400,38 +466,54 @@ class MainWindow(QWidget):
         # Создаем поля для временных параметров сектора A
         self.Плавка_время_прогрева_ковша_A = QLineEdit(self)
         self.Плавка_время_прогрева_ковша_A.setInputMask("99:99")
+        self.Плавка_время_прогрева_ковша_A.setProperty("time", "true")
         self.Плавка_время_перемещения_A = QLineEdit(self)
         self.Плавка_время_перемещения_A.setInputMask("99:99")
+        self.Плавка_время_перемещения_A.setProperty("time", "true")
         self.Плавка_время_заливки_A = QLineEdit(self)
         self.Плавка_время_заливки_A.setInputMask("99:99")
+        self.Плавка_время_заливки_A.setProperty("time", "true")
         self.Плавка_температура_заливки_A = QLineEdit(self)
+        self.Плавка_температура_заливки_A.setProperty("temperature", "true")
 
         # Создаем поля для временных параметров сектора B
         self.Плавка_время_прогрева_ковша_B = QLineEdit(self)
         self.Плавка_время_прогрева_ковша_B.setInputMask("99:99")
+        self.Плавка_время_прогрева_ковша_B.setProperty("time", "true")
         self.Плавка_время_перемещения_B = QLineEdit(self)
         self.Плавка_время_перемещения_B.setInputMask("99:99")
+        self.Плавка_время_перемещения_B.setProperty("time", "true")
         self.Плавка_время_заливки_B = QLineEdit(self)
         self.Плавка_время_заливки_B.setInputMask("99:99")
+        self.Плавка_время_заливки_B.setProperty("time", "true")
         self.Плавка_температура_заливки_B = QLineEdit(self)
+        self.Плавка_температура_заливки_B.setProperty("temperature", "true")
 
         # Создаем поля для временных параметров сектора C
         self.Плавка_время_прогрева_ковша_C = QLineEdit(self)
         self.Плавка_время_прогрева_ковша_C.setInputMask("99:99")
+        self.Плавка_время_прогрева_ковша_C.setProperty("time", "true")
         self.Плавка_время_перемещения_C = QLineEdit(self)
         self.Плавка_время_перемещения_C.setInputMask("99:99")
+        self.Плавка_время_перемещения_C.setProperty("time", "true")
         self.Плавка_время_заливки_C = QLineEdit(self)
         self.Плавка_время_заливки_C.setInputMask("99:99")
+        self.Плавка_время_заливки_C.setProperty("time", "true")
         self.Плавка_температура_заливки_C = QLineEdit(self)
+        self.Плавка_температура_заливки_C.setProperty("temperature", "true")
 
         # Создаем поля для временных параметров сектора D
         self.Плавка_время_прогрева_ковша_D = QLineEdit(self)
         self.Плавка_время_прогрева_ковша_D.setInputMask("99:99")
+        self.Плавка_время_прогрева_ковша_D.setProperty("time", "true")
         self.Плавка_время_перемещения_D = QLineEdit(self)
         self.Плавка_время_перемещения_D.setInputMask("99:99")
+        self.Плавка_время_перемещения_D.setProperty("time", "true")
         self.Плавка_время_заливки_D = QLineEdit(self)
         self.Плавка_время_заливки_D.setInputMask("99:99")
+        self.Плавка_время_заливки_D.setProperty("time", "true")
         self.Плавка_температура_заливки_D = QLineEdit(self)
+        self.Плавка_температура_заливки_D.setProperty("temperature", "true")
 
         # Создаем поле для комментария
         self.Комментарий = QTextEdit(self)
@@ -1257,80 +1339,96 @@ class EditRecordDialog(QDialog):
         # Создаем поля для временных параметров сектора A
         self.Плавка_время_прогрева_ковша_A = QLineEdit(self)
         self.Плавка_время_прогрева_ковша_A.setInputMask("99:99")
+        self.Плавка_время_прогрева_ковша_A.setProperty("time", "true")
         content_layout.addWidget(QLabel("Время прогрева ковша (ЧЧ:ММ):"))
         content_layout.addWidget(self.Плавка_время_прогрева_ковша_A)
 
         self.Плавка_время_перемещения_A = QLineEdit(self)
         self.Плавка_время_перемещения_A.setInputMask("99:99")
+        self.Плавка_время_перемещения_A.setProperty("time", "true")
         content_layout.addWidget(QLabel("Время перемещения (ЧЧ:ММ):"))
         content_layout.addWidget(self.Плавка_время_перемещения_A)
 
         self.Плавка_время_заливки_A = QLineEdit(self)
         self.Плавка_время_заливки_A.setInputMask("99:99")
+        self.Плавка_время_заливки_A.setProperty("time", "true")
         content_layout.addWidget(QLabel("Время заливки (ЧЧ:ММ):"))
         content_layout.addWidget(self.Плавка_время_заливки_A)
 
         self.Плавка_температура_заливки_A = QLineEdit(self)
+        self.Плавка_температура_заливки_A.setProperty("temperature", "true")
         content_layout.addWidget(QLabel("Температура заливки:"))
         content_layout.addWidget(self.Плавка_температура_заливки_A)
 
         # Создаем поля для временных параметров сектора B
         self.Плавка_время_прогрева_ковша_B = QLineEdit(self)
         self.Плавка_время_прогрева_ковша_B.setInputMask("99:99")
+        self.Плавка_время_прогрева_ковша_B.setProperty("time", "true")
         content_layout.addWidget(QLabel("Время прогрева ковша (ЧЧ:ММ):"))
         content_layout.addWidget(self.Плавка_время_прогрева_ковша_B)
 
         self.Плавка_время_перемещения_B = QLineEdit(self)
         self.Плавка_время_перемещения_B.setInputMask("99:99")
+        self.Плавка_время_перемещения_B.setProperty("time", "true")
         content_layout.addWidget(QLabel("Время перемещения (ЧЧ:ММ):"))
         content_layout.addWidget(self.Плавка_время_перемещения_B)
 
         self.Плавка_время_заливки_B = QLineEdit(self)
         self.Плавка_время_заливки_B.setInputMask("99:99")
+        self.Плавка_время_заливки_B.setProperty("time", "true")
         content_layout.addWidget(QLabel("Время заливки (ЧЧ:ММ):"))
         content_layout.addWidget(self.Плавка_время_заливки_B)
 
         self.Плавка_температура_заливки_B = QLineEdit(self)
+        self.Плавка_температура_заливки_B.setProperty("temperature", "true")
         content_layout.addWidget(QLabel("Температура заливки:"))
         content_layout.addWidget(self.Плавка_температура_заливки_B)
 
         # Создаем поля для временных параметров сектора C
         self.Плавка_время_прогрева_ковша_C = QLineEdit(self)
         self.Плавка_время_прогрева_ковша_C.setInputMask("99:99")
+        self.Плавка_время_прогрева_ковша_C.setProperty("time", "true")
         content_layout.addWidget(QLabel("Время прогрева ковша (ЧЧ:ММ):"))
         content_layout.addWidget(self.Плавка_время_прогрева_ковша_C)
 
         self.Плавка_время_перемещения_C = QLineEdit(self)
         self.Плавка_время_перемещения_C.setInputMask("99:99")
+        self.Плавка_время_перемещения_C.setProperty("time", "true")
         content_layout.addWidget(QLabel("Время перемещения (ЧЧ:ММ):"))
         content_layout.addWidget(self.Плавка_время_перемещения_C)
 
         self.Плавка_время_заливки_C = QLineEdit(self)
         self.Плавка_время_заливки_C.setInputMask("99:99")
+        self.Плавка_время_заливки_C.setProperty("time", "true")
         content_layout.addWidget(QLabel("Время заливки (ЧЧ:ММ):"))
         content_layout.addWidget(self.Плавка_время_заливки_C)
 
         self.Плавка_температура_заливки_C = QLineEdit(self)
+        self.Плавка_температура_заливки_C.setProperty("temperature", "true")
         content_layout.addWidget(QLabel("Температура заливки:"))
         content_layout.addWidget(self.Плавка_температура_заливки_C)
 
         # Создаем поля для временных параметров сектора D
         self.Плавка_время_прогрева_ковша_D = QLineEdit(self)
         self.Плавка_время_прогрева_ковша_D.setInputMask("99:99")
+        self.Плавка_время_прогрева_ковша_D.setProperty("time", "true")
         content_layout.addWidget(QLabel("Время прогрева ковша (ЧЧ:ММ):"))
         content_layout.addWidget(self.Плавка_время_прогрева_ковша_D)
 
         self.Плавка_время_перемещения_D = QLineEdit(self)
         self.Плавка_время_перемещения_D.setInputMask("99:99")
+        self.Плавка_время_перемещения_D.setProperty("time", "true")
         content_layout.addWidget(QLabel("Время перемещения (ЧЧ:ММ):"))
         content_layout.addWidget(self.Плавка_время_перемещения_D)
 
         self.Плавка_время_заливки_D = QLineEdit(self)
         self.Плавка_время_заливки_D.setInputMask("99:99")
+        self.Плавка_время_заливки_D.setProperty("time", "true")
         content_layout.addWidget(QLabel("Время заливки (ЧЧ:ММ):"))
         content_layout.addWidget(self.Плавка_время_заливки_D)
 
         self.Плавка_температура_заливки_D = QLineEdit(self)
+        self.Плавка_температура_заливки_D.setProperty("temperature", "true")
         content_layout.addWidget(QLabel("Температура заливки:"))
         content_layout.addWidget(self.Плавка_температура_заливки_D)
 
@@ -1437,9 +1535,9 @@ class EditRecordDialog(QDialog):
             
             # Находим строку с нужным ID
             row_index = None
-            for idx, row in enumerate(ws.iter_rows(min_row=2), start=2):
-                if str(row[0].value) == self.record_id:
-                    row_index = idx
+            for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True)):
+                if str(row[0]) == self.record_id:
+                    row_index = idx + 2
                     break
             
             if row_index:
