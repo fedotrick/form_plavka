@@ -26,9 +26,9 @@ class Database:
                 # Создаем таблицу для основной информации о плавке
                 cursor.execute('''
                     CREATE TABLE IF NOT EXISTS plavki (
-                        id TEXT PRIMARY KEY,
+                        id INTEGER PRIMARY KEY,
                         uchet_number TEXT,
-                        date TEXT,
+                        date DATE,
                         plavka_number TEXT NOT NULL,
                         cluster_number TEXT,
                         senior_shift TEXT,
@@ -47,12 +47,12 @@ class Database:
                 cursor.execute('''
                     CREATE TABLE IF NOT EXISTS sectors (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        plavka_id TEXT,
+                        plavka_id INTEGER,
                         sector_name TEXT,
-                        sector_number TEXT,
-                        heating_time TEXT,
-                        movement_time TEXT,
-                        pouring_time TEXT,
+                        sector_number INTEGER,
+                        heating_time TIME,
+                        movement_time TIME,
+                        pouring_time TIME,
                         temperature REAL,
                         FOREIGN KEY (plavka_id) REFERENCES plavki (id),
                         UNIQUE(plavka_id, sector_name)
