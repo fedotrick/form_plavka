@@ -2,124 +2,38 @@ import sys
 import os
 import re
 import logging
-import shutil
+from datetime import datetime
 from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLineEdit,
-    QPushButton, QMessageBox, QLabel, QScrollArea, QFrame,
+    QPushButton, QMessageBox, QLabel, QFrame,
     QDateEdit, QComboBox, QTableWidget, QTableWidgetItem,
     QHBoxLayout, QDialog, QFileDialog, QGroupBox, QGridLayout,
     QTabWidget, QTextEdit
 )
 from PySide6.QtCore import Qt, QDate
-from PySide6 import QtGui
-from openpyxl import Workbook, load_workbook
-from datetime import datetime, timedelta
-import pandas as pd
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QGraphicsDropShadowEffect
+from database import Database
 
-# В начале файла добавить настройку логирования
+# Настройка логирования
 logging.basicConfig(
     filename='plavka.log',
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-# Вынести настройки в отдельные константы
-EXCEL_FILENAME = 'plavka.xlsx'
-TEMPERATURE_RANGE = (500, 2000)
+# Константы
 TIME_FORMAT = "HH:mm"
+TEMPERATURE_RANGE = (500, 2000)
 
-# Добавляем новые константы
-SEARCH_FIELDS = ['ID', 'Учетный_номер', 'Номер_плавки', 'Наименование_отливки']
-EXPORT_FORMATS = {
-    'CSV': '*.csv',
-    'PDF': '*.pdf',
-    'Excel': '*.xlsx'
-}
-
-# Добавляем новые константы
-BACKUP_DIR = 'backups'
-MAX_BACKUPS = 5  # Максимальное количество резервных копий
-
-# Функция для сохранения данных в Excel
-def save_to_excel(ID, Учетный_номер, Плавка_дата, Номер_плавки, Номер_кластера,
-                  Старший_смены_плавки, Первый_участник_смены_плавки,
-                  Второй_участник_смены_плавки, Третий_участник_смены_плавки,
-                  Четвертый_участник_смены_плавки, Наименование_отливки,
-                  Тип_эксперемента, Сектор_A_опоки, Сектор_B_опоки,
-                  Сектор_C_опоки, Сектор_D_опоки, 
-                  Плавка_время_прогрева_ковша_A, Плавка_время_перемещения_A, Плавка_время_заливки_A, Плавка_температура_заливки_A,
-                  Плавка_время_прогрева_ковша_B, Плавка_время_перемещения_B, Плавка_время_заливки_B, Плавка_температура_заливки_B,
-                  Плавка_время_прогрева_ковша_C, Плавка_время_перемещения_C, Плавка_время_заливки_C, Плавка_температура_заливки_C,
-                  Плавка_время_прогрева_ковша_D, Плавка_время_перемещения_D, Плавка_время_заливки_D, Плавка_температура_заливки_D,
-                  Комментарий
-                  ):
-    file_name = 'plavka.xlsx'
-
-    if not os.path.exists(file_name):
-        workbook = Workbook()
-        sheet = workbook.active
-        sheet.title = "Records"
-        headers = ["ID", "Учетный_номер", "Плавка_дата", "Номер_плавки", "Номер_кластера",
-                  "Старший_смены_плавки", "Первый_участник_смены_плавки",
-                  "Второй_участник_смены_плавки", "Третий_участник_смены_плавки",
-                  "Четвертый_участник_смены_плавки", "Наименование_отливки",
-                  "Тип_эксперемента", "Сектор_A_опоки", "Сектор_B_опоки",
-                  "Сектор_C_опоки", "Сектор_D_опоки",
-                  "Плавка_время_прогрева_ковша_A", "Плавка_время_перемещения_A", "Плавка_время_заливки_A", "Плавка_температура_заливки_A",
-                  "Плавка_время_прогрева_ковша_B", "Плавка_время_перемещения_B", "Плавка_время_заливки_B", "Плавка_температура_заливки_B",
-                  "Плавка_время_прогрева_ковша_C", "Плавка_время_перемещения_C", "Плавка_время_заливки_C", "Плавка_температура_заливки_C",
-                  "Плавка_время_прогрева_ковша_D", "Плавка_время_перемещения_D", "Плавка_время_заливки_D", "Плавка_температура_заливки_D",
-                  "Комментарий"]
-        sheet.append(headers)
-    else:
-        workbook = load_workbook(file_name)
-        sheet = workbook.active
-
-    # Создаем список данных в том же порядке, что и заголовки
-    data = [
-        ID, Учетный_номер, Плавка_дата, Номер_плавки, Номер_кластера,
-        Старший_смены_плавки, Первый_участник_смены_плавки,
-        Второй_участник_смены_плавки, Третий_участник_смены_плавки,
-        Четвертый_участник_смены_плавки, Наименование_отливки,
-        Тип_эксперемента, Сектор_A_опоки, Сектор_B_опоки,
-        Сектор_C_опоки, Сектор_D_опоки,
-        Плавка_время_прогрева_ковша_A, Плавка_время_перемещения_A, Плавка_время_заливки_A, Плавка_температура_заливки_A,
-        Плавка_время_прогрева_ковша_B, Плавка_время_перемещения_B, Плавка_время_заливки_B, Плавка_температура_заливки_B,
-        Плавка_время_прогрева_ковша_C, Плавка_время_перемещения_C, Плавка_время_заливки_C, Плавка_температура_заливки_C,
-        Плавка_время_прогрева_ковша_D, Плавка_время_перемещения_D, Плавка_время_заливки_D, Плавка_температура_заливки_D,
-        Комментарий
-    ]
-
-    # Добавляем данные в таблицу
-    sheet.append(data)
-
-    # Автоматически регулируем ширину столбцов
-    for column in sheet.columns:
-        max_length = 0
-        column_letter = column[0].column_letter
-        for cell in column:
-            try:
-                if len(str(cell.value)) > max_length:
-                    max_length = len(str(cell.value))
-            except:
-                pass
-        adjusted_width = (max_length + 2)
-        sheet.column_dimensions[column_letter].width = adjusted_width
-
-    # Сохраняем файл
-    try:
-        workbook.save(file_name)
-        return True
-    except Exception as e:
-        logging.error(f"Ошибка при сохранении в Excel: {str(e)}")
-        return False
-
-# Основное окно приложения
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
+        self.db = Database()
+        self.init_ui()
+
+    def init_ui(self):
+        """Инициализация пользовательского интерфейса"""
         self.setWindowTitle("Электронный журнал плавки")
         
         # Устанавливаем светлый фон в стиле Nord
@@ -274,6 +188,8 @@ class MainWindow(QWidget):
         basic_grid.addWidget(self.Номер_плавки, 1, 1)
         basic_grid.addWidget(QLabel("Номер кластера:"), 2, 0)
         basic_grid.addWidget(self.Номер_кластера, 2, 1)
+        basic_grid.addWidget(QLabel("Учетный номер:"), 3, 0)
+        basic_grid.addWidget(self.Учетный_номер, 3, 1)
         basic_info_group.setLayout(basic_grid)
         
         # Участники
@@ -421,6 +337,10 @@ class MainWindow(QWidget):
         self.Номер_плавки = QLineEdit(self)
         self.Номер_плавки.setReadOnly(True)
         
+        # Добавляем поле учетного номера
+        self.Учетный_номер = QLineEdit(self)
+        self.Учетный_номер.setReadOnly(True)
+        
         self.Номер_кластера = QLineEdit(self)
         
         # Создаем комбобоксы для участников
@@ -533,37 +453,43 @@ class MainWindow(QWidget):
         self.generate_plavka_number()
 
     def generate_plavka_number(self):
+        """Генерирует номер плавки в формате месяц-номер"""
         try:
-            current_month = self.Плавка_дата.date().month()
+            current_date = self.Плавка_дата.date()
+            current_month = current_date.month()
+            current_year = current_date.year()
             
-            if os.path.exists('plavka.xlsx'):
-                df = pd.read_excel('plavka.xlsx')
-                if not df.empty:
-                    # Конвертируем даты в datetime
-                    df['Плавка_дата'] = pd.to_datetime(df['Плавка_дата'], format='%d.%m.%Y')
-                    
-                    # Фильтруем записи только текущего месяца и года
-                    current_year = self.Плавка_дата.date().year()
-                    current_month_records = df[
-                        (df['Плавка_дата'].dt.month == current_month) & 
-                        (df['Плавка_дата'].dt.year == current_year)
-                    ]
-                    
-                    if not current_month_records.empty:
-                        # Ищем последний номер для текущего месяца
-                        last_numbers = []
-                        for num in current_month_records['Номер_плавки']:
-                            try:
-                                if isinstance(num, str) and '-' in num:
-                                    month, number = num.split('-')
-                                    if month == str(current_month):
-                                        last_numbers.append(int(number))
-                            except (ValueError, TypeError):
-                                continue
+            next_number = 1  # По умолчанию начинаем с 1
+            
+            if os.path.exists('plavka.db'):
+                try:
+                    records = self.db.get_records()
+                    if records:
+                        # Фильтруем записи только текущего месяца и года
+                        current_month_records = [
+                            record for record in records 
+                            if record['date'] and record['date'].startswith(f"{current_year}-{current_month:02d}")
+                        ]
                         
-                        next_number = max(last_numbers) + 1 if last_numbers else 1
-            else:
-                next_number = 1
+                        if current_month_records:
+                            # Ищем последний номер для текущего месяца
+                            last_numbers = []
+                            for record in current_month_records:
+                                if not record['plavka_number']:
+                                    continue
+                                    
+                                try:
+                                    month, number = record['plavka_number'].split('-')
+                                    if month == str(current_month) and number.isdigit():
+                                        last_numbers.append(int(number))
+                                except (ValueError, AttributeError):
+                                    logging.warning(f"Некорректный формат номера плавки в БД: {record['plavka_number']}")
+                                    continue
+                            
+                            if last_numbers:
+                                next_number = max(last_numbers) + 1
+                except Exception as db_error:
+                    logging.error(f"Ошибка при чтении из базы данных: {str(db_error)}")
             
             # Форматируем номер плавки: месяц-номер(с ведущими нулями)
             new_plavka_number = f"{current_month}-{str(next_number).zfill(3)}"
@@ -572,34 +498,69 @@ class MainWindow(QWidget):
             # Обновляем учетный номер после генерации номера плавки
             self.update_uchet_number()
             
+            return new_plavka_number
+            
         except Exception as e:
             logging.error(f"Ошибка при генерации номера плавки: {str(e)}")
-            self.Номер_плавки.setText("")
+            self.Номер_плавки.clear()
+            self.update_uchet_number()  # Очистит учетный номер, так как номер плавки пустой
+            return None
 
     def update_uchet_number(self):
         """Обновляет учетный номер на основе номера плавки"""
         try:
-            plavka_number = self.Номер_плавки.text()
-            if plavka_number:
-                year = str(self.Плавка_дата.date().year())[-2:]  # Последние 2 цифры года
-                uchet_number = f"{plavka_number}/{year}"
-                return uchet_number
+            plavka_number = self.Номер_плавки.text().strip()
+            if not plavka_number:
+                logging.warning("Номер плавки пустой")
+                self.Учетный_номер.clear()
+                return None
+
+            # Проверяем формат номера плавки (должен быть месяц-номер)
+            if not re.match(r'^\d+-\d+$', plavka_number):
+                logging.warning(f"Неверный формат номера плавки: {plavka_number}")
+                self.Учетный_номер.clear()
+                return None
+
+            year = str(self.Плавка_дата.date().year())[-2:]  # Последние 2 цифры года
+            uchet_number = f"{plavka_number}/{year}"
+            self.Учетный_номер.setText(uchet_number)
+            return uchet_number
+        
         except Exception as e:
             logging.error(f"Ошибка при обновлении учетного номера: {str(e)}")
-        return None
+            self.Учетный_номер.clear()
+            return None
 
     def generate_id(self, Плавка_дата, Номер_плавки):
-        year = Плавка_дата.year()
-        
-        # Удаляем все символы, кроме цифр, и заменяем '-' на '.'
-        номер_плавки = re.sub(r'[^0-9.-]', '', Номер_плавки).replace('-', '.')
-        
-        if номер_плавки:  # Проверяем, что номер плавки не пустой
-            return f"{year}{номер_плавки}"
-        else:
-            QMessageBox.warning(self, "Ошибка", "Номер плавки должен содержать хотя бы одну цифру.")
-        
-        return None
+        """Генерирует ID в формате год + номер_плавки"""
+        try:
+            if not Номер_плавки or not Плавка_дата:
+                logging.warning("Не указана дата или номер плавки")
+                return None
+                
+            year = Плавка_дата.year()
+            номер_плавки = Номер_плавки.strip()
+            
+            # Проверяем формат номера плавки (должен быть месяц-номер)
+            if not re.match(r'^\d+-\d+$', номер_плавки):
+                logging.warning(f"Неверный формат номера плавки: {номер_плавки}")
+                return None
+                
+            # Заменяем '-' на '.' для формата ID
+            номер_плавки = номер_плавки.replace('-', '.')
+            
+            id_number = f"{year}{номер_плавки}"
+            
+            # Проверяем, что ID уникален
+            if self.check_duplicate_id(id_number):
+                logging.error(f"ID уже существует в базе данных: {id_number}")
+                return None
+                
+            return id_number
+            
+        except Exception as e:
+            logging.error(f"Ошибка при генерации ID: {str(e)}")
+            return None
     
     def generate_учетный_номер(self, Плавка_дата, Номер_плавки):
         # Получаем последние две цифры года
@@ -624,25 +585,12 @@ class MainWindow(QWidget):
         return False
 
     def check_duplicate_id(self, id_number):
-        """Проверка существования ID в plavka.xlsx"""
+        """Проверка существования ID в plavka.db"""
         try:
-            if not os.path.exists('plavka.xlsx'):
+            if not os.path.exists('plavka.db'):
                 return False
             
-            wb = load_workbook('plavka.xlsx', read_only=True)
-            ws = wb.active
-            
-            # Преобразуем проверяемый ID в строку для сравнения
-            id_to_check = str(id_number).strip()
-            
-            # Проверяем первый столбец (ID)
-            for row in ws.iter_rows(min_row=2, values_only=True):
-                if row[0] and str(row[0]).strip() == id_to_check:
-                    wb.close()
-                    return True
-            
-            wb.close()
-            return False
+            return self.db.check_duplicate_id(id_number)
         except Exception as e:
             logging.error(f"Ошибка при проверке дубликата ID: {str(e)}")
             return False
@@ -746,21 +694,43 @@ class MainWindow(QWidget):
 
             Комментарий = self.Комментарий.toPlainText()
 
-            save_to_excel(id_number, Учетный_номер, formatted_date, Номер_плавки, Номер_кластера,
-                           Старший_смены_плавки, Первый_участник_смены_плавки,
-                           Второй_участник_смены_плавки, Третий_участник_смены_плавки,
-                           Четвертый_участник_смены_плавки, Наименование_отливки,
-                           Тип_эксперемента, Сектор_A_опоки, Сектор_B_опоки,
-                           Сектор_C_опоки, Сектор_D_опоки, 
-                           Плавка_время_прогрева_ковша_A, Плавка_время_перемещения_A, Плавка_время_заливки_A, Плавка_температура_заливки_A,
-                           Плавка_время_прогрева_ковша_B, Плавка_время_перемещения_B, Плавка_время_заливки_B, Плавка_температура_заливки_B,
-                           Плавка_время_прогрева_ковша_C, Плавка_время_перемещения_C, Плавка_время_заливки_C, Плавка_температура_заливки_C,
-                           Плавка_время_прогрева_ковша_D, Плавка_время_перемещения_D, Плавка_время_заливки_D, Плавка_температура_заливки_D,
-                           Комментарий)
+            self.db.save_plavka({
+                'id': id_number,
+                'uchet_number': Учетный_номер,
+                'date': Плавка_дата.toString("yyyy-MM-dd"),
+                'plavka_number': Номер_плавки,
+                'cluster_number': Номер_кластера,
+                'senior_shift': Старший_смены_плавки,
+                'participant1': Первый_участник_смены_плавки,
+                'participant2': Второй_участник_смены_плавки,
+                'participant3': Третий_участник_смены_плавки,
+                'participant4': Четвертый_участник_смены_плавки,
+                'casting_name': Наименование_отливки,
+                'experiment_type': Тип_эксперемента,
+                'sector_A': Сектор_A_опоки,
+                'heating_time_A': Плавка_время_прогрева_ковша_A,
+                'movement_time_A': Плавка_время_перемещения_A,
+                'pouring_time_A': Плавка_время_заливки_A,
+                'temperature_A': Плавка_температура_заливки_A,
+                'sector_B': Сектор_B_опоки,
+                'heating_time_B': Плавка_время_прогрева_ковша_B,
+                'movement_time_B': Плавка_время_перемещения_B,
+                'pouring_time_B': Плавка_время_заливки_B,
+                'temperature_B': Плавка_температура_заливки_B,
+                'sector_C': Сектор_C_опоки,
+                'heating_time_C': Плавка_время_прогрева_ковша_C,
+                'movement_time_C': Плавка_время_перемещения_C,
+                'pouring_time_C': Плавка_время_заливки_C,
+                'temperature_C': Плавка_температура_заливки_C,
+                'sector_D': Сектор_D_опоки,
+                'heating_time_D': Плавка_время_прогрева_ковша_D,
+                'movement_time_D': Плавка_время_перемещения_D,
+                'pouring_time_D': Плавка_время_заливки_D,
+                'temperature_D': Плавка_температура_заливки_D,
+                'comment': Комментарий
+            })
 
-            QMessageBox.information(self, "Успех", "Данные сохранены в Excel!")
-
-            # Очистка полей ввода
+            QMessageBox.information(self, "Успех", "Данные успешно сохранены!")
             self.clear_fields()
             logging.info("Данные успешно сохранены")
             
@@ -805,106 +775,13 @@ class MainWindow(QWidget):
         self.Комментарий.clear()
 
     def show_search_dialog(self):
-        dialog = SearchDialog(self)
-        dialog.exec_()
-
-class StatisticsWidget(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setup_ui()
-        
-    def setup_ui(self):
-        layout = QVBoxLayout(self)
-        
-        # Создаем таблицу для отображения данных
-        self.data_table = QTableWidget()
-        self.data_table.setColumnCount(2)
-        self.data_table.setHorizontalHeaderLabels(["Дата", "Температура"])
-        layout.addWidget(self.data_table)
-        
-        # Кнопки для разных типов отображения
-        buttons_layout = QHBoxLayout()
-        
-        temp_button = QPushButton("Температуры")
-        temp_button.clicked.connect(lambda: self.show_data('temperature'))
-        
-        casting_button = QPushButton("Статистика отливок")
-        casting_button.clicked.connect(lambda: self.show_data('castings'))
-        
-        time_button = QPushButton("Временной анализ")
-        time_button.clicked.connect(lambda: self.show_data('time'))
-        
-        buttons_layout.addWidget(temp_button)
-        buttons_layout.addWidget(casting_button)
-        buttons_layout.addWidget(time_button)
-        
-        layout.addLayout(buttons_layout)
-    
-    def show_data(self, data_type):
-        self.data_table.setRowCount(0)
-        
-        try:
-            wb = load_workbook(EXCEL_FILENAME, read_only=True)
-            ws = wb.active
-            headers = [cell.value for cell in ws[1]]
-            
-            if data_type == 'temperature':
-                self._show_temperature(ws, headers)
-            elif data_type == 'castings':
-                self._show_castings(ws, headers)
-            elif data_type == 'time':
-                self._show_time_analysis(ws, headers)
-                
-            wb.close()
-            
-        except Exception as e:
-            logging.error(f"Ошибка при отображении данных: {str(e)}")
-            QMessageBox.critical(self, "Ошибка", f"Ошибка при отображении данных: {str(e)}")
-    
-    def _show_temperature(self, ws, headers):
-        self.data_table.setHorizontalHeaderLabels(["Дата", "Температура"])
-        
-        for row in ws.iter_rows(min_row=2, values_only=True):
-            data = dict(zip(headers, row))
-            try:
-                temp_A = float(data['Плавка_температура_заливки_A'])
-                temp_B = float(data['Плавка_температура_заливки_B'])
-                temp_C = float(data['Плавка_температура_заливки_C'])
-                temp_D = float(data['Плавка_температура_заливки_D'])
-                date = data['Плавка_дата']
-                
-                row_position = self.data_table.rowCount()
-                self.data_table.insertRow(row_position)
-                
-                self.data_table.setItem(row_position, 0, QTableWidgetItem(date))
-                self.data_table.setItem(row_position, 1, QTableWidgetItem(f"{temp_A}°C"))
-                
-                row_position = self.data_table.rowCount()
-                self.data_table.insertRow(row_position)
-                
-                self.data_table.setItem(row_position, 0, QTableWidgetItem(date))
-                self.data_table.setItem(row_position, 1, QTableWidgetItem(f"{temp_B}°C"))
-                
-                row_position = self.data_table.rowCount()
-                self.data_table.insertRow(row_position)
-                
-                self.data_table.setItem(row_position, 0, QTableWidgetItem(date))
-                self.data_table.setItem(row_position, 1, QTableWidgetItem(f"{temp_C}°C"))
-                
-                row_position = self.data_table.rowCount()
-                self.data_table.insertRow(row_position)
-                
-                self.data_table.setItem(row_position, 0, QTableWidgetItem(date))
-                self.data_table.setItem(row_position, 1, QTableWidgetItem(f"{temp_D}°C"))
-                
-            except (ValueError, TypeError):
-                continue
-        
-        self.data_table.resizeColumnsToContents()
+        dialog = SearchDialog(self.db, parent=self)
+        dialog.exec()
 
 class SearchDialog(QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, db, parent=None):
         super().__init__(parent)
+        self.db = db
         self.setWindowTitle("Поиск записей")
         self.setMinimumSize(1000, 700)
         
@@ -969,8 +846,8 @@ class SearchDialog(QDialog):
         search_layout.addWidget(self.search_input)
         
         self.results_table = QTableWidget()
-        self.results_table.setColumnCount(len(SEARCH_FIELDS))
-        self.results_table.setHorizontalHeaderLabels(SEARCH_FIELDS)
+        self.results_table.setColumnCount(2)
+        self.results_table.setHorizontalHeaderLabels(["Дата", "Температура"])
         search_layout.addWidget(self.results_table)
         
         self.tab_widget.addTab(search_tab, "Результаты поиска")
@@ -1019,22 +896,22 @@ class SearchDialog(QDialog):
             data = dict(zip(headers, row))
             
             # Фильтр по дате
-            record_date = QDate.fromString(data['Плавка_дата'], "dd.MM.yyyy")
+            record_date = QDate.fromString(data['date'], "yyyy-MM-dd")
             if not (self.date_from.date() <= record_date <= self.date_to.date()):
                 return False
             
             # Фильтр по типу отливки
             if self.filter_casting.currentText() != "Все" and \
-               data['Наименование_отливки'] != self.filter_casting.currentText():
+               data['casting_name'] != self.filter_casting.currentText():
                 return False
             
             # Фильтр по температуре
             if self.temp_from.text() and self.temp_to.text():
                 try:
-                    temp_A = float(data['Плавка_температура_заливки_A'])
-                    temp_B = float(data['Плавка_температура_заливки_B'])
-                    temp_C = float(data['Плавка_температура_заливки_C'])
-                    temp_D = float(data['Плавка_температура_заливки_D'])
+                    temp_A = float(data['temperature_A'])
+                    temp_B = float(data['temperature_B'])
+                    temp_C = float(data['temperature_C'])
+                    temp_D = float(data['temperature_D'])
                     temp_from = float(self.temp_from.text())
                     temp_to = float(self.temp_to.text())
                     if not (temp_from <= temp_A <= temp_to) and not (temp_from <= temp_B <= temp_to) and not (temp_from <= temp_C <= temp_to) and not (temp_from <= temp_D <= temp_to):
@@ -1050,9 +927,7 @@ class SearchDialog(QDialog):
     def update_statistics(self):
         """Обновляет статистику по данным"""
         try:
-            wb = load_workbook(EXCEL_FILENAME, read_only=True)
-            ws = wb.active
-            headers = [cell.value for cell in ws[1]]
+            records = self.db.get_records()
             
             stats = {
                 'total_records': 0,
@@ -1063,21 +938,20 @@ class SearchDialog(QDialog):
                 'max_temp': float('-inf')
             }
             
-            for row in ws.iter_rows(min_row=2, values_only=True):
+            for record in records:
                 # Проверяем фильтры
-                if not self.apply_filters(row, headers):
+                if not self.apply_filters(record, self.db.get_headers()):
                     continue
                     
                 # Ищем совпадения
-                data = dict(zip(headers, row))
                 stats['total_records'] += 1
                 
                 # Температура
                 try:
-                    temp_A = float(data['Плавка_температура_заливки_A'])
-                    temp_B = float(data['Плавка_температура_заливки_B'])
-                    temp_C = float(data['Плавка_температура_заливки_C'])
-                    temp_D = float(data['Плавка_температура_заливки_D'])
+                    temp_A = float(record['temperature_A'])
+                    temp_B = float(record['temperature_B'])
+                    temp_C = float(record['temperature_C'])
+                    temp_D = float(record['temperature_D'])
                     stats['avg_temp'].append(temp_A)
                     stats['avg_temp'].append(temp_B)
                     stats['avg_temp'].append(temp_C)
@@ -1088,15 +962,15 @@ class SearchDialog(QDialog):
                     pass
                 
                 # Типы отливок
-                casting = data['Наименование_отливки']
+                casting = record['casting_name']
                 stats['casting_types'][casting] = stats['casting_types'].get(casting, 0) + 1
                 
                 # Участники
-                stats['participants'].add(data['Старший_смены_плавки'])
-                stats['participants'].add(data['Первый_участник_смены_плавки'])
-                stats['participants'].add(data['Второй_участник_смены_плавки'])
-                stats['participants'].add(data['Третий_участник_смены_плавки'])
-                stats['participants'].add(data['Четвертый_участник_смены_плавки'])
+                stats['participants'].add(record['senior_shift'])
+                stats['participants'].add(record['participant1'])
+                stats['participants'].add(record['participant2'])
+                stats['participants'].add(record['participant3'])
+                stats['participants'].add(record['participant4'])
             
             # Формируем отчет
             report = [
@@ -1116,7 +990,6 @@ class SearchDialog(QDialog):
                 report.append(f"{casting}: {count} ({count/stats['total_records']*100:.1f}%)")
             
             self.stats_text.setText("\n".join(report))
-            wb.close()
             
         except Exception as e:
             logging.error(f"Ошибка при обновлении статистики: {str(e)}")
@@ -1125,31 +998,27 @@ class SearchDialog(QDialog):
     def search_records(self):
         search_text = self.search_input.text().lower()
         try:
-            wb = load_workbook(EXCEL_FILENAME, read_only=True)
-            ws = wb.active
-            headers = [cell.value for cell in ws[1]]
+            records = self.db.get_records()
             
             self.results_table.setRowCount(0)
             
-            for row in ws.iter_rows(min_row=2, values_only=True):
+            for row in records:
                 # Проверяем фильтры
-                if not self.apply_filters(row, headers):
+                if not self.apply_filters(row, self.db.get_headers()):
                     continue
                     
                 # Ищем совпадения
-                for cell in row:
-                    if cell and str(cell).lower().find(search_text) != -1:
+                for value in row.values():
+                    if value and str(value).lower().find(search_text) != -1:
                         row_position = self.results_table.rowCount()
                         self.results_table.insertRow(row_position)
                         
-                        for col, field in enumerate(SEARCH_FIELDS):
-                            field_index = headers.index(field)
+                        for col, field in enumerate(self.db.get_headers()):
+                            field_value = row[field]
                             self.results_table.setItem(
                                 row_position, col, 
-                                QTableWidgetItem(str(row[field_index])))
+                                QTableWidgetItem(str(field_value) if field_value is not None else ""))
                         break
-            
-            wb.close()
             
         except Exception as e:
             logging.error(f"Ошибка при поиске: {str(e)}")
@@ -1187,7 +1056,7 @@ class SearchDialog(QDialog):
                         row_data.append(item.text() if item else "")
                     data.append(row_data)
                 
-                df = pd.DataFrame(data, columns=SEARCH_FIELDS)
+                df = pd.DataFrame(data, columns=self.db.get_headers())
                 
                 if "xlsx" in selected_format:
                     df.to_excel(file_name, index=False)
@@ -1207,19 +1076,19 @@ class SearchDialog(QDialog):
     def create_backup(self):
         try:
             # Создаем директорию для резервных копий если её нет
-            if not os.path.exists(BACKUP_DIR):
-                os.makedirs(BACKUP_DIR)
+            if not os.path.exists('backups'):
+                os.makedirs('backups')
             
             # Формируем имя файла резервной копии
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            backup_file = os.path.join(BACKUP_DIR, f'plavka_backup_{timestamp}.xlsx')
+            backup_file = os.path.join('backups', f'plavka_backup_{timestamp}.db')
             
             # Копируем файл
-            shutil.copy2(EXCEL_FILENAME, backup_file)
+            shutil.copy2('plavka.db', backup_file)
             
             # Удаляем старые резервные копии если их больше MAX_BACKUPS
-            backups = sorted([os.path.join(BACKUP_DIR, f) for f in os.listdir(BACKUP_DIR)])
-            while len(backups) > MAX_BACKUPS:
+            backups = sorted([os.path.join('backups', f) for f in os.listdir('backups')])
+            while len(backups) > 5:
                 os.remove(backups[0])
                 backups.pop(0)
             
@@ -1456,127 +1325,106 @@ class EditRecordDialog(QDialog):
 
     def load_record_data(self):
         try:
-            wb = load_workbook(EXCEL_FILENAME)
-            ws = wb.active
+            record = self.db.get_record(self.record_id)
             
-            headers = [cell.value for cell in ws[1]]
-            
-            for row in ws.iter_rows(min_row=2, values_only=True):
-                if str(row[0]) == self.record_id:
-                    # Заполняем поля данными
-                    self.fill_fields(row, headers)
-                    break
-                    
-            wb.close()
+            # Заполняем поля данными
+            self.fill_fields(record)
             
         except Exception as e:
             logging.error(f"Ошибка при загрузке записи: {str(e)}")
             QMessageBox.critical(self, "Ошибка", f"Ошибка при загрузке записи: {str(e)}")
 
-    def fill_fields(self, row, headers):
+    def fill_fields(self, record):
         """Заполняет поля формы данными из записи"""
         try:
-            # Создаем словарь с данными
-            data = dict(zip(headers, row))
-            
             # Заполняем поля
-            self.Плавка_дата.setDate(QDate.fromString(data['Плавка_дата'], "dd.MM.yyyy"))
-            self.Номер_плавки.setText(str(data['Номер_плавки']))
-            self.Номер_кластера.setText(str(data['Номер_кластера']))
+            self.Плавка_дата.setDate(QDate.fromString(record['date'], "yyyy-MM-dd"))
+            self.Номер_плавки.setText(record['plavka_number'])
+            self.Номер_кластера.setText(record['cluster_number'])
             
             # Устанавливаем значения комбобоксов
-            self.Старший_смены_плавки.setCurrentText(str(data['Старший_смены_плавки']))
-            self.Первый_участник_смены_плавки.setCurrentText(str(data['Первый_участник_смены_плавки']))
-            self.Второй_участник_смены_плавки.setCurrentText(str(data['Второй_участник_смены_плавки']))
-            self.Третий_участник_смены_плавки.setCurrentText(str(data['Третий_участник_смены_плавки']))
-            self.Четвертый_участник_смены_плавки.setCurrentText(str(data['Четвертый_участник_смены_плавки']))
+            self.Старший_смены_плавки.setCurrentText(record['senior_shift'])
+            self.Первый_участник_смены_плавки.setCurrentText(record['participant1'])
+            self.Второй_участник_смены_плавки.setCurrentText(record['participant2'])
+            self.Третий_участник_смены_плавки.setCurrentText(record['participant3'])
+            self.Четвертый_участник_смены_плавки.setCurrentText(record['participant4'])
             
-            self.Наименование_отливки.setCurrentText(str(data['Наименование_отливки']))
-            self.Тип_эксперемента.setCurrentText(str(data['Тип_эксперемента']))
+            self.Наименование_отливки.setCurrentText(record['casting_name'])
+            self.Тип_эксперемента.setCurrentText(record['experiment_type'])
             
             # Заполняем секторы опоки
-            self.Сектор_A_опоки.setText(str(data['Сектор_A_опоки']))
-            self.Сектор_B_опоки.setText(str(data['Сектор_B_опоки']))
-            self.Сектор_C_опоки.setText(str(data['Сектор_C_опоки']))
-            self.Сектор_D_опоки.setText(str(data['Сектор_D_опоки']))
+            self.Сектор_A_опоки.setText(record['sector_A'])
+            self.Сектор_B_опоки.setText(record['sector_B'])
+            self.Сектор_C_опоки.setText(record['sector_C'])
+            self.Сектор_D_опоки.setText(record['sector_D'])
             
             # Заполняем время и температуру
-            self.Плавка_время_прогрева_ковша_A.setText(str(data['Плавка_время_прогрева_ковша_A']))
-            self.Плавка_время_перемещения_A.setText(str(data['Плавка_время_перемещения_A']))
-            self.Плавка_время_заливки_A.setText(str(data['Плавка_время_заливки_A']))
-            self.Плавка_температура_заливки_A.setText(str(data['Плавка_температура_заливки_A']))
+            self.Плавка_время_прогрева_ковша_A.setText(record['heating_time_A'])
+            self.Плавка_время_перемещения_A.setText(record['movement_time_A'])
+            self.Плавка_время_заливки_A.setText(record['pouring_time_A'])
+            self.Плавка_температура_заливки_A.setText(record['temperature_A'])
 
-            self.Плавка_время_прогрева_ковша_B.setText(str(data['Плавка_время_прогрева_ковша_B']))
-            self.Плавка_время_перемещения_B.setText(str(data['Плавка_время_перемещения_B']))
-            self.Плавка_время_заливки_B.setText(str(data['Плавка_время_заливки_B']))
-            self.Плавка_температура_заливки_B.setText(str(data['Плавка_температура_заливки_B']))
+            self.Плавка_время_прогрева_ковша_B.setText(record['heating_time_B'])
+            self.Плавка_время_перемещения_B.setText(record['movement_time_B'])
+            self.Плавка_время_заливки_B.setText(record['pouring_time_B'])
+            self.Плавка_температура_заливки_B.setText(record['temperature_B'])
 
-            self.Плавка_время_прогрева_ковша_C.setText(str(data['Плавка_время_прогрева_ковша_C']))
-            self.Плавка_время_перемещения_C.setText(str(data['Плавка_время_перемещения_C']))
-            self.Плавка_время_заливки_C.setText(str(data['Плавка_время_заливки_C']))
-            self.Плавка_температура_заливки_C.setText(str(data['Плавка_температура_заливки_C']))
+            self.Плавка_время_прогрева_ковша_C.setText(record['heating_time_C'])
+            self.Плавка_время_перемещения_C.setText(record['movement_time_C'])
+            self.Плавка_время_заливки_C.setText(record['pouring_time_C'])
+            self.Плавка_температура_заливки_C.setText(record['temperature_C'])
 
-            self.Плавка_время_прогрева_ковша_D.setText(str(data['Плавка_время_прогрева_ковша_D']))
-            self.Плавка_время_перемещения_D.setText(str(data['Плавка_время_перемещения_D']))
-            self.Плавка_время_заливки_D.setText(str(data['Плавка_время_заливки_D']))
-            self.Плавка_температура_заливки_D.setText(str(data['Плавка_температура_заливки_D']))
+            self.Плавка_время_прогрева_ковша_D.setText(record['heating_time_D'])
+            self.Плавка_время_перемещения_D.setText(record['movement_time_D'])
+            self.Плавка_время_заливки_D.setText(record['pouring_time_D'])
+            self.Плавка_температура_заливки_D.setText(record['temperature_D'])
 
-            self.Комментарий.setText(str(data['Комментарий']))
+            self.Комментарий.setText(record['comment'])
             
         except Exception as e:
             logging.error(f"Ошибка при заполнении полей: {str(e)}")
             raise
 
     def save_changes(self):
-        """Сохраняет изменения в Excel файл"""
+        """Сохраняет изменения в базу"""
         try:
-            wb = load_workbook(EXCEL_FILENAME)
-            ws = wb.active
-            
-            # Находим строку с нужным ID
-            row_index = None
-            for idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True)):
-                if str(row[0]) == self.record_id:
-                    row_index = idx + 2
-                    break
-            
-            if row_index:
-                # Обновляем данные в строке
-                ws.cell(row=row_index, column=3).value = self.Плавка_дата.date().toString("dd.MM.yyyy")
-                ws.cell(row=row_index, column=4).value = self.Номер_плавки.text()
-                ws.cell(row=row_index, column=5).value = self.Номер_кластера.text()
-                ws.cell(row=row_index, column=6).value = self.Старший_смены_плавки.currentText()
-                ws.cell(row=row_index, column=7).value = self.Первый_участник_смены_плавки.currentText()
-                ws.cell(row=row_index, column=8).value = self.Второй_участник_смены_плавки.currentText()
-                ws.cell(row=row_index, column=9).value = self.Третий_участник_смены_плавки.currentText()
-                ws.cell(row=row_index, column=10).value = self.Четвертый_участник_смены_плавки.currentText()
-                ws.cell(row=row_index, column=11).value = self.Наименование_отливки.currentText()
-                ws.cell(row=row_index, column=12).value = self.Тип_эксперемента.currentText()
-                ws.cell(row=row_index, column=13).value = self.Сектор_A_опоки.text()
-                ws.cell(row=row_index, column=14).value = self.Сектор_B_опоки.text()
-                ws.cell(row=row_index, column=15).value = self.Сектор_C_опоки.text()
-                ws.cell(row=row_index, column=16).value = self.Сектор_D_опоки.text()
-                ws.cell(row=row_index, column=17).value = self.Плавка_время_прогрева_ковша_A.text()
-                ws.cell(row=row_index, column=18).value = self.Плавка_время_перемещения_A.text()
-                ws.cell(row=row_index, column=19).value = self.Плавка_время_заливки_A.text()
-                ws.cell(row=row_index, column=20).value = self.Плавка_температура_заливки_A.text()
-                ws.cell(row=row_index, column=21).value = self.Плавка_время_прогрева_ковша_B.text()
-                ws.cell(row=row_index, column=22).value = self.Плавка_время_перемещения_B.text()
-                ws.cell(row=row_index, column=23).value = self.Плавка_время_заливки_B.text()
-                ws.cell(row=row_index, column=24).value = self.Плавка_температура_заливки_B.text()
-                ws.cell(row=row_index, column=25).value = self.Плавка_время_прогрева_ковша_C.text()
-                ws.cell(row=row_index, column=26).value = self.Плавка_время_перемещения_C.text()
-                ws.cell(row=row_index, column=27).value = self.Плавка_время_заливки_C.text()
-                ws.cell(row=row_index, column=28).value = self.Плавка_температура_заливки_C.text()
-                ws.cell(row=row_index, column=29).value = self.Плавка_время_прогрева_ковша_D.text()
-                ws.cell(row=row_index, column=30).value = self.Плавка_время_перемещения_D.text()
-                ws.cell(row=row_index, column=31).value = self.Плавка_время_заливки_D.text()
-                ws.cell(row=row_index, column=32).value = self.Плавка_температура_заливки_D.text()
-                ws.cell(row=row_index, column=33).value = self.Комментарий.toPlainText()
-                
-                wb.save(EXCEL_FILENAME)
-                QMessageBox.information(self, "Успех", "Изменения сохранены")
-                self.accept()
+            # Обновляем данные в базе
+            self.db.update_record(self.record_id, {
+                'date': self.Плавка_дата.date().toString("yyyy-MM-dd"),
+                'plavka_number': self.Номер_плавки.text(),
+                'cluster_number': self.Номер_кластера.text(),
+                'senior_shift': self.Старший_смены_плавки.currentText(),
+                'participant1': self.Первый_участник_смены_плавки.currentText(),
+                'participant2': self.Второй_участник_смены_плавки.currentText(),
+                'participant3': self.Третий_участник_смены_плавки.currentText(),
+                'participant4': self.Четвертый_участник_смены_плавки.currentText(),
+                'casting_name': self.Наименование_отливки.currentText(),
+                'experiment_type': self.Тип_эксперемента.currentText(),
+                'sector_A': self.Сектор_A_опоки.text(),
+                'heating_time_A': self.Плавка_время_прогрева_ковша_A.text(),
+                'movement_time_A': self.Плавка_время_перемещения_A.text(),
+                'pouring_time_A': self.Плавка_время_заливки_A.text(),
+                'temperature_A': self.Плавка_температура_заливки_A.text(),
+                'sector_B': self.Сектор_B_опоки.text(),
+                'heating_time_B': self.Плавка_время_прогрева_ковша_B.text(),
+                'movement_time_B': self.Плавка_время_перемещения_B.text(),
+                'pouring_time_B': self.Плавка_время_заливки_B.text(),
+                'temperature_B': self.Плавка_температура_заливки_B.text(),
+                'sector_C': self.Сектор_C_опоки.text(),
+                'heating_time_C': self.Плавка_время_прогрева_ковша_C.text(),
+                'movement_time_C': self.Плавка_время_перемещения_C.text(),
+                'pouring_time_C': self.Плавка_время_заливки_C.text(),
+                'temperature_C': self.Плавка_температура_заливки_C.text(),
+                'sector_D': self.Сектор_D_опоки.text(),
+                'heating_time_D': self.Плавка_время_прогрева_ковша_D.text(),
+                'movement_time_D': self.Плавка_время_перемещения_D.text(),
+                'pouring_time_D': self.Плавка_время_заливки_D.text(),
+                'temperature_D': self.Плавка_температура_заливки_D.text(),
+                'comment': self.Комментарий.toPlainText()
+            })
+
+            QMessageBox.information(self, "Успех", "Изменения сохранены")
+            self.accept()
             
         except Exception as e:
             logging.error(f"Ошибка при сохранении изменений: {str(e)}")
