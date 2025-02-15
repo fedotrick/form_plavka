@@ -48,39 +48,48 @@ def save_to_excel(ID, Учетный_номер, Плавка_дата, Номе
                   Второй_участник_смены_плавки, Третий_участник_смены_плавки,
                   Четвертый_участник_смены_плавки, Наименование_отливки,
                   Тип_эксперемента, Сектор_A_опоки, Сектор_B_опоки,
-                  Сектор_C_опоки, Сектор_D_опоки, Плавка_время_прогрева_ковша,
-                  Плавка_время_перемещения, Плавка_время_заливки,
-                  Плавка_температура_заливки
+                  Сектор_C_опоки, Сектор_D_опоки, 
+                  Плавка_время_прогрева_ковша_A, Плавка_время_перемещения_A, Плавка_время_заливки_A, Плавка_температура_заливки_A,
+                  Плавка_время_прогрева_ковша_B, Плавка_время_перемещения_B, Плавка_время_заливки_B, Плавка_температура_заливки_B,
+                  Плавка_время_прогрева_ковша_C, Плавка_время_перемещения_C, Плавка_время_заливки_C, Плавка_температура_заливки_C,
+                  Плавка_время_прогрева_ковша_D, Плавка_время_перемещения_D, Плавка_время_заливки_D, Плавка_температура_заливки_D,
+                  Комментарий
                   ):
     file_name = 'plavka.xlsx'
 
-    # Проверка, существует ли файл, и создание новой книги, если нет
     if not os.path.exists(file_name):
         workbook = Workbook()
         sheet = workbook.active
         sheet.title = "Records"
-        sheet.append(["ID", "Учетный_номер", "Плавка_дата", "Номер_плавки", "Номер_кластера",
-                       "Старший_смены_плавки", "Первый_участник_смены_плавки",
-                       "Второй_участник_смены_плавки", "Третий_участник_смены_плавки",
-                       "Четвертый_участник_смены_плавки", "Наименование_отливки",
-                       "Тип_эксперемента", "Сектор_A_опоки", "Сектор_B_опоки",
-                       "Сектор_C_опоки", "Сектор_D_опоки", "Плавка_время_прогрева_ковша",
-                       "Плавка_время_перемещения", "Плавка_время_заливки", 
-                       "Плавка_температура_заливки"])
+        headers = ["ID", "Учетный_номер", "Плавка_дата", "Номер_плавки", "Номер_кластера",
+                  "Старший_смены_плавки", "Первый_участник_смены_плавки",
+                  "Второй_участник_смены_плавки", "Третий_участник_смены_плавки",
+                  "Четвертый_участник_смены_плавки", "Наименование_отливки",
+                  "Тип_эксперемента", "Сектор_A_опоки", "Сектор_B_опоки",
+                  "Сектор_C_опоки", "Сектор_D_опоки",
+                  "Плавка_время_прогрева_ковша_A", "Плавка_время_перемещения_A", "Плавка_время_заливки_A", "Плавка_температура_заливки_A",
+                  "Плавка_время_прогрева_ковша_B", "Плавка_время_перемещения_B", "Плавка_время_заливки_B", "Плавка_температура_заливки_B",
+                  "Плавка_время_прогрева_ковша_C", "Плавка_время_перемещения_C", "Плавка_время_заливки_C", "Плавка_температура_заливки_C",
+                  "Плавка_время_прогрева_ковша_D", "Плавка_время_перемещения_D", "Плавка_время_заливки_D", "Плавка_температура_заливки_D",
+                  "Комментарий"]
+        sheet.append(headers)
     else:
-        workbook = load_workbook(file_name)  # Загрузка существующей книги
-        sheet = workbook.active  # Получение активного листа
+        workbook = load_workbook(file_name)
+        sheet = workbook.active
 
-    # Добавление данных в таблицу
-    sheet.append([ID, Учетный_номер, Плавка_дата, Номер_плавки, Номер_кластера,
-                  Старший_смены_плавки, Первый_участник_смены_плавки,
-                  Второй_участник_смены_плавки, Третий_участник_смены_плавки,
-                  Четвертый_участник_смены_плавки, Наименование_отливки,
-                  Тип_эксперемента, Сектор_A_опоки, Сектор_B_опоки,
-                  Сектор_C_опоки, Сектор_D_опоки, Плавка_время_прогрева_ковша,
-                  Плавка_время_перемещения, Плавка_время_заливки,
-                  Плавка_температура_заливки])
-
+    row_data = [ID, Учетный_номер, Плавка_дата, Номер_плавки, Номер_кластера,
+                Старший_смены_плавки, Первый_участник_смены_плавки,
+                Второй_участник_смены_плавки, Третий_участник_смены_плавки,
+                Четвертый_участник_смены_плавки, Наименование_отливки,
+                Тип_эксперемента, Сектор_A_опоки, Сектор_B_опоки,
+                Сектор_C_опоки, Сектор_D_опоки,
+                Плавка_время_прогрева_ковша_A, Плавка_время_перемещения_A, Плавка_время_заливки_A, Плавка_температура_заливки_A,
+                Плавка_время_прогрева_ковша_B, Плавка_время_перемещения_B, Плавка_время_заливки_B, Плавка_температура_заливки_B,
+                Плавка_время_прогрева_ковша_C, Плавка_время_перемещения_C, Плавка_время_заливки_C, Плавка_температура_заливки_C,
+                Плавка_время_прогрева_ковша_D, Плавка_время_перемещения_D, Плавка_время_заливки_D, Плавка_температура_заливки_D,
+                Комментарий]
+    
+    sheet.append(row_data)
     workbook.save(file_name)
 
 # Основное окно приложения
@@ -112,12 +121,14 @@ class MainWindow(QWidget):
                 border-radius: 5px;
                 padding: 5px;
                 color: white;
+                min-width: 150px;
             }
             QGroupBox {
                 border: 2px solid #00b3b3;
                 border-radius: 5px;
                 margin-top: 1em;
                 padding-top: 10px;
+                padding: 15px;
             }
             QGroupBox::title {
                 color: #00b3b3;
@@ -144,15 +155,30 @@ class MainWindow(QWidget):
             }
             QLabel {
                 color: #00b3b3;
+                min-width: 120px;
+            }
+            QTextEdit {
+                background-color: #333333;
+                border: 2px solid #00b3b3;
+                border-radius: 5px;
+                padding: 5px;
+                color: white;
+                min-height: 60px;
             }
         """)
         
         # Создаем все виджеты
         self.create_widgets()
         
+        # Создаем основной scroll area для прокрутки
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll_widget = QWidget()
+        scroll.setWidget(scroll_widget)
+        
         # Создаем основной layout
-        main_layout = QVBoxLayout(self)
-        main_layout.setSpacing(5)  # Уменьшаем расстояние между элементами
+        main_layout = QVBoxLayout(scroll_widget)
+        main_layout.setSpacing(10)  # Увеличиваем расстояние между элементами
         
         # Создаем группы для логического разделения элементов
         basic_info_group = QGroupBox("Основная информация")
@@ -162,9 +188,13 @@ class MainWindow(QWidget):
         
         # Создаем grid layouts для каждой группы
         basic_grid = QGridLayout()
+        basic_grid.setSpacing(10)
         participants_grid = QGridLayout()
+        participants_grid.setSpacing(10)
         casting_grid = QGridLayout()
+        casting_grid.setSpacing(10)
         time_grid = QGridLayout()
+        time_grid.setSpacing(10)
         
         # Основная информация (в 2 колонки)
         basic_grid.addWidget(QLabel("Дата:"), 0, 0)
@@ -188,39 +218,94 @@ class MainWindow(QWidget):
         participants_grid.addWidget(self.Четвертый_участник_смены_плавки, 4, 1)
         participants_group.setLayout(participants_grid)
         
-        # Параметры отливки (в 2 колонки)
+        # Параметры отливки
         casting_grid.addWidget(QLabel("Наименование:"), 0, 0)
-        casting_grid.addWidget(self.Наименование_отливки, 0, 1)
+        casting_grid.addWidget(self.Наименование_отливки, 0, 1, 1, 3)
         casting_grid.addWidget(QLabel("Тип эксперимента:"), 1, 0)
-        casting_grid.addWidget(self.Тип_эксперемента, 1, 1)
+        casting_grid.addWidget(self.Тип_эксперемента, 1, 1, 1, 3)
         
-        # Добавляем секторы опок в одну строку
-        sectors_widget = QWidget()
-        sectors_layout = QHBoxLayout()
-        sectors_layout.setSpacing(5)
-        sectors_layout.addWidget(QLabel("A:"))
-        sectors_layout.addWidget(self.Сектор_A_опоки)
-        sectors_layout.addWidget(QLabel("B:"))
-        sectors_layout.addWidget(self.Сектор_B_опоки)
-        sectors_layout.addWidget(QLabel("C:"))
-        sectors_layout.addWidget(self.Сектор_C_опоки)
-        sectors_layout.addWidget(QLabel("D:"))
-        sectors_layout.addWidget(self.Сектор_D_опоки)
-        sectors_widget.setLayout(sectors_layout)
+        # Добавляем секторы опок в сетку
         casting_grid.addWidget(QLabel("Секторы опок:"), 2, 0)
-        casting_grid.addWidget(sectors_widget, 2, 1)
+        sectors_grid = QGridLayout()
+        sectors_grid.addWidget(QLabel("A:"), 0, 0)
+        sectors_grid.addWidget(self.Сектор_A_опоки, 0, 1)
+        sectors_grid.addWidget(QLabel("B:"), 0, 2)
+        sectors_grid.addWidget(self.Сектор_B_опоки, 0, 3)
+        sectors_grid.addWidget(QLabel("C:"), 1, 0)
+        sectors_grid.addWidget(self.Сектор_C_опоки, 1, 1)
+        sectors_grid.addWidget(QLabel("D:"), 1, 2)
+        sectors_grid.addWidget(self.Сектор_D_опоки, 1, 3)
+        sectors_widget = QWidget()
+        sectors_widget.setLayout(sectors_grid)
+        casting_grid.addWidget(sectors_widget, 2, 1, 1, 3)
         casting_group.setLayout(casting_grid)
         
-        # Временные параметры (в 2 колонки)
-        time_grid.addWidget(QLabel("Время прогрева:"), 0, 0)
-        time_grid.addWidget(self.Плавка_время_прогрева_ковша, 0, 1)
-        time_grid.addWidget(QLabel("Время перемещения:"), 1, 0)
-        time_grid.addWidget(self.Плавка_время_перемещения, 1, 1)
-        time_grid.addWidget(QLabel("Время заливки:"), 2, 0)
-        time_grid.addWidget(self.Плавка_время_заливки, 2, 1)
-        time_grid.addWidget(QLabel("Температура:"), 3, 0)
-        time_grid.addWidget(self.Плавка_температура_заливки, 3, 1)
-        time_group.setLayout(time_grid)
+        # Временные параметры в сетку 2x2
+        time_params_layout = QGridLayout()
+        
+        # Сектор A
+        sector_a_group = QGroupBox("Сектор A")
+        sector_a_layout = QGridLayout()
+        sector_a_layout.addWidget(QLabel("Время прогрева:"), 0, 0)
+        sector_a_layout.addWidget(self.Плавка_время_прогрева_ковша_A, 0, 1)
+        sector_a_layout.addWidget(QLabel("Время перемещения:"), 1, 0)
+        sector_a_layout.addWidget(self.Плавка_время_перемещения_A, 1, 1)
+        sector_a_layout.addWidget(QLabel("Время заливки:"), 2, 0)
+        sector_a_layout.addWidget(self.Плавка_время_заливки_A, 2, 1)
+        sector_a_layout.addWidget(QLabel("Температура:"), 3, 0)
+        sector_a_layout.addWidget(self.Плавка_температура_заливки_A, 3, 1)
+        sector_a_group.setLayout(sector_a_layout)
+        time_params_layout.addWidget(sector_a_group, 0, 0)
+
+        # Сектор B
+        sector_b_group = QGroupBox("Сектор B")
+        sector_b_layout = QGridLayout()
+        sector_b_layout.addWidget(QLabel("Время прогрева:"), 0, 0)
+        sector_b_layout.addWidget(self.Плавка_время_прогрева_ковша_B, 0, 1)
+        sector_b_layout.addWidget(QLabel("Время перемещения:"), 1, 0)
+        sector_b_layout.addWidget(self.Плавка_время_перемещения_B, 1, 1)
+        sector_b_layout.addWidget(QLabel("Время заливки:"), 2, 0)
+        sector_b_layout.addWidget(self.Плавка_время_заливки_B, 2, 1)
+        sector_b_layout.addWidget(QLabel("Температура:"), 3, 0)
+        sector_b_layout.addWidget(self.Плавка_температура_заливки_B, 3, 1)
+        sector_b_group.setLayout(sector_b_layout)
+        time_params_layout.addWidget(sector_b_group, 0, 1)
+
+        # Сектор C
+        sector_c_group = QGroupBox("Сектор C")
+        sector_c_layout = QGridLayout()
+        sector_c_layout.addWidget(QLabel("Время прогрева:"), 0, 0)
+        sector_c_layout.addWidget(self.Плавка_время_прогрева_ковша_C, 0, 1)
+        sector_c_layout.addWidget(QLabel("Время перемещения:"), 1, 0)
+        sector_c_layout.addWidget(self.Плавка_время_перемещения_C, 1, 1)
+        sector_c_layout.addWidget(QLabel("Время заливки:"), 2, 0)
+        sector_c_layout.addWidget(self.Плавка_время_заливки_C, 2, 1)
+        sector_c_layout.addWidget(QLabel("Температура:"), 3, 0)
+        sector_c_layout.addWidget(self.Плавка_температура_заливки_C, 3, 1)
+        sector_c_group.setLayout(sector_c_layout)
+        time_params_layout.addWidget(sector_c_group, 1, 0)
+
+        # Сектор D
+        sector_d_group = QGroupBox("Сектор D")
+        sector_d_layout = QGridLayout()
+        sector_d_layout.addWidget(QLabel("Время прогрева:"), 0, 0)
+        sector_d_layout.addWidget(self.Плавка_время_прогрева_ковша_D, 0, 1)
+        sector_d_layout.addWidget(QLabel("Время перемещения:"), 1, 0)
+        sector_d_layout.addWidget(self.Плавка_время_перемещения_D, 1, 1)
+        sector_d_layout.addWidget(QLabel("Время заливки:"), 2, 0)
+        sector_d_layout.addWidget(self.Плавка_время_заливки_D, 2, 1)
+        sector_d_layout.addWidget(QLabel("Температура:"), 3, 0)
+        sector_d_layout.addWidget(self.Плавка_температура_заливки_D, 3, 1)
+        sector_d_group.setLayout(sector_d_layout)
+        time_params_layout.addWidget(sector_d_group, 1, 1)
+
+        time_group.setLayout(time_params_layout)
+        
+        # Добавляем поле для комментария
+        comment_group = QGroupBox("Комментарий")
+        comment_layout = QVBoxLayout()
+        comment_layout.addWidget(self.Комментарий)
+        comment_group.setLayout(comment_layout)
         
         # Кнопки управления
         buttons_layout = QHBoxLayout()
@@ -232,10 +317,15 @@ class MainWindow(QWidget):
         main_layout.addWidget(participants_group)
         main_layout.addWidget(casting_group)
         main_layout.addWidget(time_group)
+        main_layout.addWidget(comment_group)
         main_layout.addLayout(buttons_layout)
         
-        # Устанавливаем фиксированный размер окна
-        self.setFixedSize(600, 800)
+        # Создаем layout для всего окна
+        window_layout = QVBoxLayout(self)
+        window_layout.addWidget(scroll)
+        
+        # Устанавливаем размер окна
+        self.setMinimumSize(800, 900)
 
     def create_widgets(self):
         """Создание всех виджетов формы"""
@@ -290,17 +380,45 @@ class MainWindow(QWidget):
         self.Сектор_C_опоки = QLineEdit(self)
         self.Сектор_D_опоки = QLineEdit(self)
         
-        # Создаем поля для временных параметров
-        self.Плавка_время_прогрева_ковша = QLineEdit(self)
-        self.Плавка_время_прогрева_ковша.setInputMask("99:99")
-        
-        self.Плавка_время_перемещения = QLineEdit(self)
-        self.Плавка_время_перемещения.setInputMask("99:99")
-        
-        self.Плавка_время_заливки = QLineEdit(self)
-        self.Плавка_время_заливки.setInputMask("99:99")
-        
-        self.Плавка_температура_заливки = QLineEdit(self)
+        # Создаем поля для временных параметров сектора A
+        self.Плавка_время_прогрева_ковша_A = QLineEdit(self)
+        self.Плавка_время_прогрева_ковша_A.setInputMask("99:99")
+        self.Плавка_время_перемещения_A = QLineEdit(self)
+        self.Плавка_время_перемещения_A.setInputMask("99:99")
+        self.Плавка_время_заливки_A = QLineEdit(self)
+        self.Плавка_время_заливки_A.setInputMask("99:99")
+        self.Плавка_температура_заливки_A = QLineEdit(self)
+
+        # Создаем поля для временных параметров сектора B
+        self.Плавка_время_прогрева_ковша_B = QLineEdit(self)
+        self.Плавка_время_прогрева_ковша_B.setInputMask("99:99")
+        self.Плавка_время_перемещения_B = QLineEdit(self)
+        self.Плавка_время_перемещения_B.setInputMask("99:99")
+        self.Плавка_время_заливки_B = QLineEdit(self)
+        self.Плавка_время_заливки_B.setInputMask("99:99")
+        self.Плавка_температура_заливки_B = QLineEdit(self)
+
+        # Создаем поля для временных параметров сектора C
+        self.Плавка_время_прогрева_ковша_C = QLineEdit(self)
+        self.Плавка_время_прогрева_ковша_C.setInputMask("99:99")
+        self.Плавка_время_перемещения_C = QLineEdit(self)
+        self.Плавка_время_перемещения_C.setInputMask("99:99")
+        self.Плавка_время_заливки_C = QLineEdit(self)
+        self.Плавка_время_заливки_C.setInputMask("99:99")
+        self.Плавка_температура_заливки_C = QLineEdit(self)
+
+        # Создаем поля для временных параметров сектора D
+        self.Плавка_время_прогрева_ковша_D = QLineEdit(self)
+        self.Плавка_время_прогрева_ковша_D.setInputMask("99:99")
+        self.Плавка_время_перемещения_D = QLineEdit(self)
+        self.Плавка_время_перемещения_D.setInputMask("99:99")
+        self.Плавка_время_заливки_D = QLineEdit(self)
+        self.Плавка_время_заливки_D.setInputMask("99:99")
+        self.Плавка_температура_заливки_D = QLineEdit(self)
+
+        # Создаем поле для комментария
+        self.Комментарий = QTextEdit(self)
+        self.Комментарий.setPlaceholderText("Введите комментарий...")
         
         # Создаем кнопки
         self.save_button = QPushButton("Сохранить", self)
@@ -345,11 +463,6 @@ class MainWindow(QWidget):
                                 continue
                         
                         next_number = max(last_numbers) + 1 if last_numbers else 1
-                    else:
-                        # Если нет записей за текущий месяц, начинаем с 1
-                        next_number = 1
-                else:
-                    next_number = 1
             else:
                 next_number = 1
             
@@ -441,10 +554,13 @@ class MainWindow(QWidget):
             QMessageBox.warning(self, "Ошибка", "Номер плавки обязателен")
             return False
         
-        # Проверка температуры заливки
+        # Проверка температур заливки
         try:
-            temp = float(self.Плавка_температура_заливки.text())
-            if not (500 <= temp <= 2000):  # примерный диапазон
+            temp_A = float(self.Плавка_температура_заливки_A.text())
+            temp_B = float(self.Плавка_температура_заливки_B.text())
+            temp_C = float(self.Плавка_температура_заливки_C.text())
+            temp_D = float(self.Плавка_температура_заливки_D.text())
+            if not (500 <= temp_A <= 2000) or not (500 <= temp_B <= 2000) or not (500 <= temp_C <= 2000) or not (500 <= temp_D <= 2000):  # примерный диапазон
                 QMessageBox.warning(self, "Ошибка", "Недопустимая температура заливки")
                 return False
         except ValueError:
@@ -454,7 +570,7 @@ class MainWindow(QWidget):
         return True
 
     def format_temperature(self, temp_str):
-        """Форматирование температуры в нужный формат"""
+        """Форматирование температур в нужный формат"""
         try:
             temp = float(temp_str)
             return f"{temp:.1f}°C"
@@ -500,25 +616,48 @@ class MainWindow(QWidget):
             Сектор_C_опоки = self.Сектор_C_опоки.text()
             Сектор_D_опоки = self.Сектор_D_опоки.text()
 
-            Плавка_время_прогрева_ковша = self.Плавка_время_прогрева_ковша.text()
-            Плавка_время_перемещения = self.Плавка_время_перемещения.text()
-            Плавка_время_заливки = self.Плавка_время_заливки.text()
+            Плавка_время_прогрева_ковша_A = self.Плавка_время_прогрева_ковша_A.text()
+            Плавка_время_перемещения_A = self.Плавка_время_перемещения_A.text()
+            Плавка_время_заливки_A = self.Плавка_время_заливки_A.text()
+
+            Плавка_время_прогрева_ковша_B = self.Плавка_время_прогрева_ковша_B.text()
+            Плавка_время_перемещения_B = self.Плавка_время_перемещения_B.text()
+            Плавка_время_заливки_B = self.Плавка_время_заливки_B.text()
+
+            Плавка_время_прогрева_ковша_C = self.Плавка_время_прогрева_ковша_C.text()
+            Плавка_время_перемещения_C = self.Плавка_время_перемещения_C.text()
+            Плавка_время_заливки_C = self.Плавка_время_заливки_C.text()
+
+            Плавка_время_прогрева_ковша_D = self.Плавка_время_прогрева_ковша_D.text()
+            Плавка_время_перемещения_D = self.Плавка_время_перемещения_D.text()
+            Плавка_время_заливки_D = self.Плавка_время_заливки_D.text()
+
+            Плавка_температура_заливки_A = self.Плавка_температура_заливки_A.text()
+            Плавка_температура_заливки_B = self.Плавка_температура_заливки_B.text()
+            Плавка_температура_заливки_C = self.Плавка_температура_заливки_C.text()
+            Плавка_температура_заливки_D = self.Плавка_температура_заливки_D.text()
 
             # Валидация времени
-            if not (self.validate_time(Плавка_время_заливки) and self.validate_time(Плавка_время_прогрева_ковша) and self.validate_time(Плавка_время_перемещения)):
+            if not (self.validate_time(Плавка_время_заливки_A) and self.validate_time(Плавка_время_прогрева_ковша_A) and self.validate_time(Плавка_время_перемещения_A) and
+                    self.validate_time(Плавка_время_заливки_B) and self.validate_time(Плавка_время_прогрева_ковша_B) and self.validate_time(Плавка_время_перемещения_B) and
+                    self.validate_time(Плавка_время_заливки_C) and self.validate_time(Плавка_время_прогрева_ковша_C) and self.validate_time(Плавка_время_перемещения_C) and
+                    self.validate_time(Плавка_время_заливки_D) and self.validate_time(Плавка_время_прогрева_ковша_D) and self.validate_time(Плавка_время_перемещения_D)):
                 QMessageBox.warning(self, "Ошибка", "Некорректный ввод времени. Используйте формат ЧЧ:ММ.")
                 return
 
-            Плавка_температура_заливки = self.Плавка_температура_заливки.text()
+            Комментарий = self.Комментарий.toPlainText()
 
             save_to_excel(id_number, Учетный_номер, formatted_date, Номер_плавки, Номер_кластера,
                            Старший_смены_плавки, Первый_участник_смены_плавки,
                            Второй_участник_смены_плавки, Третий_участник_смены_плавки,
                            Четвертый_участник_смены_плавки, Наименование_отливки,
                            Тип_эксперемента, Сектор_A_опоки, Сектор_B_опоки,
-                           Сектор_C_опоки, Сектор_D_опоки, Плавка_время_прогрева_ковша,
-                           Плавка_время_перемещения, Плавка_время_заливки,
-                           Плавка_температура_заливки)
+                           Сектор_C_опоки, Сектор_D_опоки, 
+                           Плавка_время_прогрева_ковша_A, Плавка_время_перемещения_A, Плавка_время_заливки_A, Плавка_температура_заливки_A,
+                           Плавка_время_прогрева_ковша_B, Плавка_время_перемещения_B, Плавка_время_заливки_B, Плавка_температура_заливки_B,
+                           Плавка_время_прогрева_ковша_C, Плавка_время_перемещения_C, Плавка_время_заливки_C, Плавка_температура_заливки_C,
+                           Плавка_время_прогрева_ковша_D, Плавка_время_перемещения_D, Плавка_время_заливки_D, Плавка_температура_заливки_D,
+                           Комментарий)
 
             QMessageBox.information(self, "Успех", "Данные сохранены в Excel!")
 
@@ -548,10 +687,23 @@ class MainWindow(QWidget):
         self.Сектор_B_опоки.clear()
         self.Сектор_C_опоки.clear()
         self.Сектор_D_опоки.clear()
-        self.Плавка_время_прогрева_ковша.clear()
-        self.Плавка_время_перемещения.clear()
-        self.Плавка_время_заливки.clear()
-        self.Плавка_температура_заливки.clear()
+        self.Плавка_время_прогрева_ковша_A.clear()
+        self.Плавка_время_перемещения_A.clear()
+        self.Плавка_время_заливки_A.clear()
+        self.Плавка_температура_заливки_A.clear()
+        self.Плавка_время_прогрева_ковша_B.clear()
+        self.Плавка_время_перемещения_B.clear()
+        self.Плавка_время_заливки_B.clear()
+        self.Плавка_температура_заливки_B.clear()
+        self.Плавка_время_прогрева_ковша_C.clear()
+        self.Плавка_время_перемещения_C.clear()
+        self.Плавка_время_заливки_C.clear()
+        self.Плавка_температура_заливки_C.clear()
+        self.Плавка_время_прогрева_ковша_D.clear()
+        self.Плавка_время_перемещения_D.clear()
+        self.Плавка_время_заливки_D.clear()
+        self.Плавка_температура_заливки_D.clear()
+        self.Комментарий.clear()
 
     def show_search_dialog(self):
         dialog = SearchDialog(self)
@@ -616,14 +768,35 @@ class StatisticsWidget(QWidget):
         for row in ws.iter_rows(min_row=2, values_only=True):
             data = dict(zip(headers, row))
             try:
-                temp = float(data['Плавка_температура_заливки'])
+                temp_A = float(data['Плавка_температура_заливки_A'])
+                temp_B = float(data['Плавка_температура_заливки_B'])
+                temp_C = float(data['Плавка_температура_заливки_C'])
+                temp_D = float(data['Плавка_температура_заливки_D'])
                 date = data['Плавка_дата']
                 
                 row_position = self.data_table.rowCount()
                 self.data_table.insertRow(row_position)
                 
                 self.data_table.setItem(row_position, 0, QTableWidgetItem(date))
-                self.data_table.setItem(row_position, 1, QTableWidgetItem(f"{temp}°C"))
+                self.data_table.setItem(row_position, 1, QTableWidgetItem(f"{temp_A}°C"))
+                
+                row_position = self.data_table.rowCount()
+                self.data_table.insertRow(row_position)
+                
+                self.data_table.setItem(row_position, 0, QTableWidgetItem(date))
+                self.data_table.setItem(row_position, 1, QTableWidgetItem(f"{temp_B}°C"))
+                
+                row_position = self.data_table.rowCount()
+                self.data_table.insertRow(row_position)
+                
+                self.data_table.setItem(row_position, 0, QTableWidgetItem(date))
+                self.data_table.setItem(row_position, 1, QTableWidgetItem(f"{temp_C}°C"))
+                
+                row_position = self.data_table.rowCount()
+                self.data_table.insertRow(row_position)
+                
+                self.data_table.setItem(row_position, 0, QTableWidgetItem(date))
+                self.data_table.setItem(row_position, 1, QTableWidgetItem(f"{temp_D}°C"))
                 
             except (ValueError, TypeError):
                 continue
@@ -759,10 +932,13 @@ class SearchDialog(QDialog):
             # Фильтр по температуре
             if self.temp_from.text() and self.temp_to.text():
                 try:
-                    temp = float(data['Плавка_температура_заливки'])
+                    temp_A = float(data['Плавка_температура_заливки_A'])
+                    temp_B = float(data['Плавка_температура_заливки_B'])
+                    temp_C = float(data['Плавка_температура_заливки_C'])
+                    temp_D = float(data['Плавка_температура_заливки_D'])
                     temp_from = float(self.temp_from.text())
                     temp_to = float(self.temp_to.text())
-                    if not (temp_from <= temp <= temp_to):
+                    if not (temp_from <= temp_A <= temp_to) and not (temp_from <= temp_B <= temp_to) and not (temp_from <= temp_C <= temp_to) and not (temp_from <= temp_D <= temp_to):
                         return False
                 except ValueError:
                     pass
@@ -789,18 +965,26 @@ class SearchDialog(QDialog):
             }
             
             for row in ws.iter_rows(min_row=2, values_only=True):
+                # Проверяем фильтры
                 if not self.apply_filters(row, headers):
                     continue
                     
+                # Ищем совпадения
                 data = dict(zip(headers, row))
                 stats['total_records'] += 1
                 
                 # Температура
                 try:
-                    temp = float(data['Плавка_температура_заливки'])
-                    stats['avg_temp'].append(temp)
-                    stats['min_temp'] = min(stats['min_temp'], temp)
-                    stats['max_temp'] = max(stats['max_temp'], temp)
+                    temp_A = float(data['Плавка_температура_заливки_A'])
+                    temp_B = float(data['Плавка_температура_заливки_B'])
+                    temp_C = float(data['Плавка_температура_заливки_C'])
+                    temp_D = float(data['Плавка_температура_заливки_D'])
+                    stats['avg_temp'].append(temp_A)
+                    stats['avg_temp'].append(temp_B)
+                    stats['avg_temp'].append(temp_C)
+                    stats['avg_temp'].append(temp_D)
+                    stats['min_temp'] = min(stats['min_temp'], temp_A, temp_B, temp_C, temp_D)
+                    stats['max_temp'] = max(stats['max_temp'], temp_A, temp_B, temp_C, temp_D)
                 except (ValueError, TypeError):
                     pass
                 
@@ -1036,7 +1220,7 @@ class EditRecordDialog(QDialog):
         content_layout.addWidget(QLabel("Тип эксперимента:"))
         content_layout.addWidget(self.Тип_эксперемента)
 
-        # Поля для секторов опоки
+        # Создаем поля для секторов опоки
         self.Сектор_A_опоки = QLineEdit(self)
         content_layout.addWidget(QLabel("Сектор A опоки:"))
         content_layout.addWidget(self.Сектор_A_опоки)
@@ -1053,15 +1237,91 @@ class EditRecordDialog(QDialog):
         content_layout.addWidget(QLabel("Сектор D опоки:"))
         content_layout.addWidget(self.Сектор_D_опоки)
 
-        # Поля времени
-        self.Плавка_время_прогрева_ковша = QLineEdit(self)
-        self.Плавка_время_прогрева_ковша.setInputMask("99:99")
+        # Создаем поля для временных параметров сектора A
+        self.Плавка_время_прогрева_ковша_A = QLineEdit(self)
+        self.Плавка_время_прогрева_ковша_A.setInputMask("99:99")
         content_layout.addWidget(QLabel("Время прогрева ковша (ЧЧ:ММ):"))
-        content_layout.addWidget(self.Плавка_время_прогрева_ковша)
+        content_layout.addWidget(self.Плавка_время_прогрева_ковша_A)
 
-        self.Плавка_температура_заливки = QLineEdit(self)
+        self.Плавка_время_перемещения_A = QLineEdit(self)
+        self.Плавка_время_перемещения_A.setInputMask("99:99")
+        content_layout.addWidget(QLabel("Время перемещения (ЧЧ:ММ):"))
+        content_layout.addWidget(self.Плавка_время_перемещения_A)
+
+        self.Плавка_время_заливки_A = QLineEdit(self)
+        self.Плавка_время_заливки_A.setInputMask("99:99")
+        content_layout.addWidget(QLabel("Время заливки (ЧЧ:ММ):"))
+        content_layout.addWidget(self.Плавка_время_заливки_A)
+
+        self.Плавка_температура_заливки_A = QLineEdit(self)
         content_layout.addWidget(QLabel("Температура заливки:"))
-        content_layout.addWidget(self.Плавка_температура_заливки)
+        content_layout.addWidget(self.Плавка_температура_заливки_A)
+
+        # Создаем поля для временных параметров сектора B
+        self.Плавка_время_прогрева_ковша_B = QLineEdit(self)
+        self.Плавка_время_прогрева_ковша_B.setInputMask("99:99")
+        content_layout.addWidget(QLabel("Время прогрева ковша (ЧЧ:ММ):"))
+        content_layout.addWidget(self.Плавка_время_прогрева_ковша_B)
+
+        self.Плавка_время_перемещения_B = QLineEdit(self)
+        self.Плавка_время_перемещения_B.setInputMask("99:99")
+        content_layout.addWidget(QLabel("Время перемещения (ЧЧ:ММ):"))
+        content_layout.addWidget(self.Плавка_время_перемещения_B)
+
+        self.Плавка_время_заливки_B = QLineEdit(self)
+        self.Плавка_время_заливки_B.setInputMask("99:99")
+        content_layout.addWidget(QLabel("Время заливки (ЧЧ:ММ):"))
+        content_layout.addWidget(self.Плавка_время_заливки_B)
+
+        self.Плавка_температура_заливки_B = QLineEdit(self)
+        content_layout.addWidget(QLabel("Температура заливки:"))
+        content_layout.addWidget(self.Плавка_температура_заливки_B)
+
+        # Создаем поля для временных параметров сектора C
+        self.Плавка_время_прогрева_ковша_C = QLineEdit(self)
+        self.Плавка_время_прогрева_ковша_C.setInputMask("99:99")
+        content_layout.addWidget(QLabel("Время прогрева ковша (ЧЧ:ММ):"))
+        content_layout.addWidget(self.Плавка_время_прогрева_ковша_C)
+
+        self.Плавка_время_перемещения_C = QLineEdit(self)
+        self.Плавка_время_перемещения_C.setInputMask("99:99")
+        content_layout.addWidget(QLabel("Время перемещения (ЧЧ:ММ):"))
+        content_layout.addWidget(self.Плавка_время_перемещения_C)
+
+        self.Плавка_время_заливки_C = QLineEdit(self)
+        self.Плавка_время_заливки_C.setInputMask("99:99")
+        content_layout.addWidget(QLabel("Время заливки (ЧЧ:ММ):"))
+        content_layout.addWidget(self.Плавка_время_заливки_C)
+
+        self.Плавка_температура_заливки_C = QLineEdit(self)
+        content_layout.addWidget(QLabel("Температура заливки:"))
+        content_layout.addWidget(self.Плавка_температура_заливки_C)
+
+        # Создаем поля для временных параметров сектора D
+        self.Плавка_время_прогрева_ковша_D = QLineEdit(self)
+        self.Плавка_время_прогрева_ковша_D.setInputMask("99:99")
+        content_layout.addWidget(QLabel("Время прогрева ковша (ЧЧ:ММ):"))
+        content_layout.addWidget(self.Плавка_время_прогрева_ковша_D)
+
+        self.Плавка_время_перемещения_D = QLineEdit(self)
+        self.Плавка_время_перемещения_D.setInputMask("99:99")
+        content_layout.addWidget(QLabel("Время перемещения (ЧЧ:ММ):"))
+        content_layout.addWidget(self.Плавка_время_перемещения_D)
+
+        self.Плавка_время_заливки_D = QLineEdit(self)
+        self.Плавка_время_заливки_D.setInputMask("99:99")
+        content_layout.addWidget(QLabel("Время заливки (ЧЧ:ММ):"))
+        content_layout.addWidget(self.Плавка_время_заливки_D)
+
+        self.Плавка_температура_заливки_D = QLineEdit(self)
+        content_layout.addWidget(QLabel("Температура заливки:"))
+        content_layout.addWidget(self.Плавка_температура_заливки_D)
+
+        # Создаем поле для комментария
+        self.Комментарий = QTextEdit(self)
+        self.Комментарий.setPlaceholderText("Введите комментарий...")
+        content_layout.addWidget(QLabel("Комментарий:"))
+        content_layout.addWidget(self.Комментарий)
 
         # Кнопки
         button_layout = QHBoxLayout()
@@ -1126,8 +1386,27 @@ class EditRecordDialog(QDialog):
             self.Сектор_D_опоки.setText(str(data['Сектор_D_опоки']))
             
             # Заполняем время и температуру
-            self.Плавка_время_прогрева_ковша.setText(str(data['Плавка_время_прогрева_ковша']))
-            self.Плавка_температура_заливки.setText(str(data['Плавка_температура_заливки']))
+            self.Плавка_время_прогрева_ковша_A.setText(str(data['Плавка_время_прогрева_ковша_A']))
+            self.Плавка_время_перемещения_A.setText(str(data['Плавка_время_перемещения_A']))
+            self.Плавка_время_заливки_A.setText(str(data['Плавка_время_заливки_A']))
+            self.Плавка_температура_заливки_A.setText(str(data['Плавка_температура_заливки_A']))
+
+            self.Плавка_время_прогрева_ковша_B.setText(str(data['Плавка_время_прогрева_ковша_B']))
+            self.Плавка_время_перемещения_B.setText(str(data['Плавка_время_перемещения_B']))
+            self.Плавка_время_заливки_B.setText(str(data['Плавка_время_заливки_B']))
+            self.Плавка_температура_заливки_B.setText(str(data['Плавка_температура_заливки_B']))
+
+            self.Плавка_время_прогрева_ковша_C.setText(str(data['Плавка_время_прогрева_ковша_C']))
+            self.Плавка_время_перемещения_C.setText(str(data['Плавка_время_перемещения_C']))
+            self.Плавка_время_заливки_C.setText(str(data['Плавка_время_заливки_C']))
+            self.Плавка_температура_заливки_C.setText(str(data['Плавка_температура_заливки_C']))
+
+            self.Плавка_время_прогрева_ковша_D.setText(str(data['Плавка_время_прогрева_ковша_D']))
+            self.Плавка_время_перемещения_D.setText(str(data['Плавка_время_перемещения_D']))
+            self.Плавка_время_заливки_D.setText(str(data['Плавка_время_заливки_D']))
+            self.Плавка_температура_заливки_D.setText(str(data['Плавка_температура_заливки_D']))
+
+            self.Комментарий.setText(str(data['Комментарий']))
             
         except Exception as e:
             logging.error(f"Ошибка при заполнении полей: {str(e)}")
@@ -1162,10 +1441,23 @@ class EditRecordDialog(QDialog):
                 ws.cell(row=row_index, column=14).value = self.Сектор_B_опоки.text()
                 ws.cell(row=row_index, column=15).value = self.Сектор_C_опоки.text()
                 ws.cell(row=row_index, column=16).value = self.Сектор_D_опоки.text()
-                ws.cell(row=row_index, column=17).value = self.Плавка_время_прогрева_ковша.text()
-                ws.cell(row=row_index, column=18).value = self.Плавка_время_перемещения.text()
-                ws.cell(row=row_index, column=19).value = self.Плавка_время_заливки.text()
-                ws.cell(row=row_index, column=20).value = self.Плавка_температура_заливки.text()
+                ws.cell(row=row_index, column=17).value = self.Плавка_время_прогрева_ковша_A.text()
+                ws.cell(row=row_index, column=18).value = self.Плавка_время_перемещения_A.text()
+                ws.cell(row=row_index, column=19).value = self.Плавка_время_заливки_A.text()
+                ws.cell(row=row_index, column=20).value = self.Плавка_температура_заливки_A.text()
+                ws.cell(row=row_index, column=21).value = self.Плавка_время_прогрева_ковша_B.text()
+                ws.cell(row=row_index, column=22).value = self.Плавка_время_перемещения_B.text()
+                ws.cell(row=row_index, column=23).value = self.Плавка_время_заливки_B.text()
+                ws.cell(row=row_index, column=24).value = self.Плавка_температура_заливки_B.text()
+                ws.cell(row=row_index, column=25).value = self.Плавка_время_прогрева_ковша_C.text()
+                ws.cell(row=row_index, column=26).value = self.Плавка_время_перемещения_C.text()
+                ws.cell(row=row_index, column=27).value = self.Плавка_время_заливки_C.text()
+                ws.cell(row=row_index, column=28).value = self.Плавка_температура_заливки_C.text()
+                ws.cell(row=row_index, column=29).value = self.Плавка_время_прогрева_ковша_D.text()
+                ws.cell(row=row_index, column=30).value = self.Плавка_время_перемещения_D.text()
+                ws.cell(row=row_index, column=31).value = self.Плавка_время_заливки_D.text()
+                ws.cell(row=row_index, column=32).value = self.Плавка_температура_заливки_D.text()
+                ws.cell(row=row_index, column=33).value = self.Комментарий.toPlainText()
                 
                 wb.save(EXCEL_FILENAME)
                 QMessageBox.information(self, "Успех", "Изменения сохранены")
