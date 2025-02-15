@@ -136,23 +136,6 @@ class MainWindow(QWidget):
                 left: 10px;
                 padding: 0 3px 0 3px;
             }
-            QScrollArea {
-                border: 2px solid #00b3b3;
-                border-radius: 5px;
-            }
-            QTableWidget {
-                background-color: #333333;
-                border: 2px solid #00b3b3;
-                border-radius: 5px;
-                gridline-color: #00b3b3;
-                color: white;
-            }
-            QHeaderView::section {
-                background-color: #00b3b3;
-                color: white;
-                padding: 5px;
-                border: 1px solid #008080;
-            }
             QLabel {
                 color: #00b3b3;
                 min-width: 120px;
@@ -170,21 +153,23 @@ class MainWindow(QWidget):
         # Создаем все виджеты
         self.create_widgets()
         
-        # Создаем основной scroll area для прокрутки
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll_widget = QWidget()
-        scroll.setWidget(scroll_widget)
-        
         # Создаем основной layout
-        main_layout = QVBoxLayout(scroll_widget)
-        main_layout.setSpacing(10)  # Увеличиваем расстояние между элементами
+        main_layout = QHBoxLayout()  # Используем горизонтальный layout
+        
+        # Создаем левую колонку
+        left_column = QVBoxLayout()
+        left_column.setSpacing(10)
+        
+        # Создаем правую колонку
+        right_column = QVBoxLayout()
+        right_column.setSpacing(10)
         
         # Создаем группы для логического разделения элементов
         basic_info_group = QGroupBox("Основная информация")
         participants_group = QGroupBox("Участники")
         casting_group = QGroupBox("Параметры отливки")
         time_group = QGroupBox("Временные параметры")
+        comment_group = QGroupBox("Комментарий")
         
         # Создаем grid layouts для каждой группы
         basic_grid = QGridLayout()
@@ -196,7 +181,7 @@ class MainWindow(QWidget):
         time_grid = QGridLayout()
         time_grid.setSpacing(10)
         
-        # Основная информация (в 2 колонки)
+        # Основная информация
         basic_grid.addWidget(QLabel("Дата:"), 0, 0)
         basic_grid.addWidget(self.Плавка_дата, 0, 1)
         basic_grid.addWidget(QLabel("Номер плавки:"), 1, 0)
@@ -205,7 +190,7 @@ class MainWindow(QWidget):
         basic_grid.addWidget(self.Номер_кластера, 2, 1)
         basic_info_group.setLayout(basic_grid)
         
-        # Участники (в 2 колонки)
+        # Участники
         participants_grid.addWidget(QLabel("Старший смены:"), 0, 0)
         participants_grid.addWidget(self.Старший_смены_плавки, 0, 1)
         participants_grid.addWidget(QLabel("Участник 1:"), 1, 0)
@@ -302,7 +287,6 @@ class MainWindow(QWidget):
         time_group.setLayout(time_params_layout)
         
         # Добавляем поле для комментария
-        comment_group = QGroupBox("Комментарий")
         comment_layout = QVBoxLayout()
         comment_layout.addWidget(self.Комментарий)
         comment_group.setLayout(comment_layout)
@@ -312,20 +296,29 @@ class MainWindow(QWidget):
         buttons_layout.addWidget(self.save_button)
         buttons_layout.addWidget(self.search_button)
         
-        # Добавляем все группы в основной layout
-        main_layout.addWidget(basic_info_group)
-        main_layout.addWidget(participants_group)
-        main_layout.addWidget(casting_group)
-        main_layout.addWidget(time_group)
-        main_layout.addWidget(comment_group)
-        main_layout.addLayout(buttons_layout)
+        # Добавляем группы в колонки
+        left_column.addWidget(basic_info_group)
+        left_column.addWidget(participants_group)
+        left_column.addWidget(casting_group)
         
-        # Создаем layout для всего окна
-        window_layout = QVBoxLayout(self)
-        window_layout.addWidget(scroll)
+        right_column.addWidget(time_group)
+        right_column.addWidget(comment_group)
+        right_column.addLayout(buttons_layout)
+        
+        # Добавляем колонки в основной layout
+        left_widget = QWidget()
+        left_widget.setLayout(left_column)
+        right_widget = QWidget()
+        right_widget.setLayout(right_column)
+        
+        main_layout.addWidget(left_widget)
+        main_layout.addWidget(right_widget)
+        
+        # Устанавливаем основной layout
+        self.setLayout(main_layout)
         
         # Устанавливаем размер окна
-        self.setMinimumSize(800, 900)
+        self.setMinimumSize(1600, 850)
 
     def create_widgets(self):
         """Создание всех виджетов формы"""
