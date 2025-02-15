@@ -153,16 +153,16 @@ class Database:
                 
                 query = '''
                     SELECT p.*, 
-                           s1.sector_number as sector_a, s1.heating_time as heating_a, s1.movement_time as movement_a, s1.pouring_time as pouring_a, s1.temperature as temp_a,
-                           s2.sector_number as sector_b, s2.heating_time as heating_b, s2.movement_time as movement_b, s2.pouring_time as pouring_b, s2.temperature as temp_b,
-                           s3.sector_number as sector_c, s3.heating_time as heating_c, s3.movement_time as movement_c, s3.pouring_time as pouring_c, s3.temperature as temp_c,
-                           s4.sector_number as sector_d, s4.heating_time as heating_d, s4.movement_time as movement_d, s4.pouring_time as pouring_d, s4.temperature as temp_d
+                           s1.sector_number as sector_a, s1.heating_time as heating_time_a, s1.movement_time as movement_time_a, s1.pouring_time as pouring_time_a, s1.temperature as temperature_a,
+                           s2.sector_number as sector_b, s2.heating_time as heating_time_b, s2.movement_time as movement_time_b, s2.pouring_time as pouring_time_b, s2.temperature as temperature_b,
+                           s3.sector_number as sector_c, s3.heating_time as heating_time_c, s3.movement_time as movement_time_c, s3.pouring_time as pouring_time_c, s3.temperature as temperature_c,
+                           s4.sector_number as sector_d, s4.heating_time as heating_time_d, s4.movement_time as movement_time_d, s4.pouring_time as pouring_time_d, s4.temperature as temperature_d
                     FROM plavki p
                     LEFT JOIN sectors s1 ON p.id = s1.plavka_id AND s1.sector_name = 'A'
                     LEFT JOIN sectors s2 ON p.id = s2.plavka_id AND s2.sector_name = 'B'
                     LEFT JOIN sectors s3 ON p.id = s3.plavka_id AND s3.sector_name = 'C'
                     LEFT JOIN sectors s4 ON p.id = s4.plavka_id AND s4.sector_name = 'D'
-                    ORDER BY p.date DESC
+                    ORDER BY date DESC
                 '''
                 
                 cursor.execute(query)
@@ -171,8 +171,15 @@ class Database:
                 
                 for row in cursor.fetchall():
                     record_dict = dict(zip(columns, row))
-                    records.append(MeltRecord.from_dict(record_dict))
-                    
+                    try:
+                        record = MeltRecord.from_dict(record_dict)
+                        records.append(record)
+                        logging.info(f"Запись успешно преобразована в MeltRecord: {record.plavka_number}")
+                    except Exception as e:
+                        logging.error(f"Ошибка при создании MeltRecord: {str(e)}")
+                        continue
+                
+                logging.info(f"Всего получено записей: {len(records)}")
                 return records
 
         except sqlite3.Error as e:

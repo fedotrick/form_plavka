@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime, time
 from typing import Optional
 from constants import ExperimentType
+import logging
 
 @dataclass
 class SectorData:
@@ -41,7 +42,7 @@ class MeltRecord:
         result = {
             'id': self.id,
             'uchet_number': self.uchet_number,
-            'date': self.date.strftime('%Y-%m-%d'),
+            'date': self.date.strftime('%d.%m.%Y') if self.date else None,
             'plavka_number': self.plavka_number,
             'cluster_number': self.cluster_number,
             'senior_shift': self.senior_shift,
@@ -70,10 +71,25 @@ class MeltRecord:
     def from_dict(cls, data: dict) -> 'MeltRecord':
         """Создает запись из словаря данных из БД"""
         # Преобразуем дату из строки
-        date = datetime.strptime(data['date'], '%Y-%m-%d') if data['date'] else None
+        date = None
+        if data['date']:
+            try:
+                # Пробуем формат DD.MM.YYYY
+                date = datetime.strptime(data['date'], '%d.%m.%Y')
+            except ValueError as e:
+                try:
+                    # Для обратной совместимости пробуем YYYY-MM-DD
+                    date = datetime.strptime(data['date'], '%Y-%m-%d')
+                except ValueError:
+                    logging.error(f"Не удалось преобразовать дату {data['date']}: {str(e)}")
         
         # Преобразуем тип эксперимента в enum
-        experiment_type = ExperimentType(data['experiment_type']) if data['experiment_type'] else None
+        experiment_type = None
+        if data.get('experiment_type'):
+            try:
+                experiment_type = ExperimentType(data['experiment_type'])
+            except ValueError:
+                logging.warning(f"Неизвестный тип эксперимента: {data['experiment_type']}")
         
         # Создаем объекты секторов
         sectors = {}
