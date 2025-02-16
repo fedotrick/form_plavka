@@ -465,52 +465,52 @@ class MainWindow(QWidget):
         
         # Создаем поля для временных параметров сектора A
         self.Плавка_время_прогрева_ковша_A = QLineEdit(self)
-        self.Плавка_время_прогрева_ковша_A.setInputMask("99:99")
+        self.Плавка_время_прогрева_ковша_A.setInputMask("23:59")
         self.Плавка_время_прогрева_ковша_A.setProperty("time", "true")
         self.Плавка_время_перемещения_A = QLineEdit(self)
-        self.Плавка_время_перемещения_A.setInputMask("99:99")
+        self.Плавка_время_перемещения_A.setInputMask("23:59")
         self.Плавка_время_перемещения_A.setProperty("time", "true")
         self.Плавка_время_заливки_A = QLineEdit(self)
-        self.Плавка_время_заливки_A.setInputMask("99:99")
+        self.Плавка_время_заливки_A.setInputMask("23:59")
         self.Плавка_время_заливки_A.setProperty("time", "true")
         self.Плавка_температура_заливки_A = QLineEdit(self)
         self.Плавка_температура_заливки_A.setProperty("temperature", "true")
 
         # Создаем поля для временных параметров сектора B
         self.Плавка_время_прогрева_ковша_B = QLineEdit(self)
-        self.Плавка_время_прогрева_ковша_B.setInputMask("99:99")
+        self.Плавка_время_прогрева_ковша_B.setInputMask("23:59")
         self.Плавка_время_прогрева_ковша_B.setProperty("time", "true")
         self.Плавка_время_перемещения_B = QLineEdit(self)
-        self.Плавка_время_перемещения_B.setInputMask("99:99")
+        self.Плавка_время_перемещения_B.setInputMask("23:59")
         self.Плавка_время_перемещения_B.setProperty("time", "true")
         self.Плавка_время_заливки_B = QLineEdit(self)
-        self.Плавка_время_заливки_B.setInputMask("99:99")
+        self.Плавка_время_заливки_B.setInputMask("23:59")
         self.Плавка_время_заливки_B.setProperty("time", "true")
         self.Плавка_температура_заливки_B = QLineEdit(self)
         self.Плавка_температура_заливки_B.setProperty("temperature", "true")
 
         # Создаем поля для временных параметров сектора C
         self.Плавка_время_прогрева_ковша_C = QLineEdit(self)
-        self.Плавка_время_прогрева_ковша_C.setInputMask("99:99")
+        self.Плавка_время_прогрева_ковша_C.setInputMask("23:59")
         self.Плавка_время_прогрева_ковша_C.setProperty("time", "true")
         self.Плавка_время_перемещения_C = QLineEdit(self)
-        self.Плавка_время_перемещения_C.setInputMask("99:99")
+        self.Плавка_время_перемещения_C.setInputMask("23:59")
         self.Плавка_время_перемещения_C.setProperty("time", "true")
         self.Плавка_время_заливки_C = QLineEdit(self)
-        self.Плавка_время_заливки_C.setInputMask("99:99")
+        self.Плавка_время_заливки_C.setInputMask("23:59")
         self.Плавка_время_заливки_C.setProperty("time", "true")
         self.Плавка_температура_заливки_C = QLineEdit(self)
         self.Плавка_температура_заливки_C.setProperty("temperature", "true")
 
         # Создаем поля для временных параметров сектора D
         self.Плавка_время_прогрева_ковша_D = QLineEdit(self)
-        self.Плавка_время_прогрева_ковша_D.setInputMask("99:99")
+        self.Плавка_время_прогрева_ковша_D.setInputMask("23:59")
         self.Плавка_время_прогрева_ковша_D.setProperty("time", "true")
         self.Плавка_время_перемещения_D = QLineEdit(self)
-        self.Плавка_время_перемещения_D.setInputMask("99:99")
+        self.Плавка_время_перемещения_D.setInputMask("23:59")
         self.Плавка_время_перемещения_D.setProperty("time", "true")
         self.Плавка_время_заливки_D = QLineEdit(self)
-        self.Плавка_время_заливки_D.setInputMask("99:99")
+        self.Плавка_время_заливки_D.setInputMask("23:59")
         self.Плавка_время_заливки_D.setProperty("time", "true")
         self.Плавка_температура_заливки_D = QLineEdit(self)
         self.Плавка_температура_заливки_D.setProperty("temperature", "true")
@@ -592,7 +592,7 @@ class MainWindow(QWidget):
         year = Плавка_дата.year()
         
         # Удаляем все символы, кроме цифр, и заменяем '-' на '.'
-        номер_плавки = re.sub(r'[^0-9.-]', '', Номер_плавки).replace('-', '.')
+        номер_плавки = re.sub(r'[^0-9.-]', '', Номер_плавки).replace('-', '')
         
         if номер_плавки:  # Проверяем, что номер плавки не пустой
             return f"{year}{номер_плавки}"
