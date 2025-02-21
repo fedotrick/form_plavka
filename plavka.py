@@ -967,23 +967,19 @@ class MainWindow(QWidget):
                 data[f'Сектор_{sector}_опоки'] = sector_field.text().strip()
                 
                 if sector_field.text().strip():
-                    # Если сектор активен, сохраняем значения полей
+                    # Если сектор активен, сохраняем все его параметры
                     data[f'Плавка_время_прогрева_ковша_{sector}'] = self.format_time(
-                        getattr(self, f'Плавка_время_прогрева_ковша_{sector}').text().strip() or DEFAULT_HEATING_TIME
+                        getattr(self, f'Плавка_время_прогрева_ковша_{sector}').text().strip()
                     )
                     data[f'Плавка_время_перемещения_{sector}'] = self.format_time(
-                        getattr(self, f'Плавка_время_перемещения_{sector}').text().strip() or DEFAULT_MOVEMENT_TIME
+                        getattr(self, f'Плавка_время_перемещения_{sector}').text().strip()
                     )
                     data[f'Плавка_время_заливки_{sector}'] = self.format_time(
-                        getattr(self, f'Плавка_время_заливки_{sector}').text().strip() or DEFAULT_CASTING_TIME
+                        getattr(self, f'Плавка_время_заливки_{sector}').text().strip()
                     )
                     
-                    # Для температур используем значение сектора A если сектор не A
-                    if sector == 'A':
-                        temp = getattr(self, f'Плавка_температура_заливки_{sector}').text().strip()
-                    else:
-                        temp = self.Плавка_температура_заливки_A.text().strip()
-                    
+                    # Для температур используем значение из сектора A для всех секторов
+                    temp = getattr(self, f'Плавка_температура_заливки_{sector}').text().strip()
                     data[f'Плавка_температура_заливки_{sector}'] = self.format_temperature(temp)
                 else:
                     # Если сектор неактивен, сохраняем пустые значения
@@ -996,10 +992,10 @@ class MainWindow(QWidget):
             if save_to_excel(data):
                 QMessageBox.information(self, "Успех", "Данные успешно сохранены")
                 
-                # Очищаем форму
+                # Очищаем форму и генерируем новый номер плавки
                 self.clear_fields()
                 
-                # Генерируем новый номер плавки
+                # Генерируем новый номер плавки после очистки полей
                 self.generate_plavka_number()
                 
                 return True
@@ -1080,34 +1076,59 @@ class MainWindow(QWidget):
 
     def clear_fields(self):
         """Очищает все поля формы"""
-        # Устанавливаем текущую дату
-        self.Плавка_дата.setDate(QDate.currentDate())
-        
-        # Очищаем основные поля
-        self.Номер_плавки.clear()
-        self.Номер_кластера.clear()
-        self.Плавка_время_заливки.clear()
-        
-        # Сбрасываем комбобоксы участников
-        self.Старший_смены_плавки.setCurrentIndex(0)
-        self.Первый_участник_смены_плавки.setCurrentIndex(0)
-        self.Второй_участник_смены_плавки.setCurrentIndex(0)
-        self.Третий_участник_смены_плавки.setCurrentIndex(0)
-        self.Четвертый_участник_смены_плавки.setCurrentIndex(0)
-        
-        # Сбрасываем наименование и тип эксперимента
-        self.Наименование_отливки.setCurrentIndex(0)
-        self.Тип_эксперемента.setCurrentIndex(0)
-        
-        # Очищаем комментарий
-        self.Комментарий.clear()
-        
-        # Очищаем поля секторов
-        for sector in ['A', 'B', 'C', 'D']:
-            # Очищаем номер опоки
-            getattr(self, f'Сектор_{sector}_опоки').clear()
-            # Очищаем все поля сектора
-            self.update_sector_fields(sector)
+        try:
+            # Сохраняем текущую дату перед очисткой
+            current_date = self.Плавка_дата.date()
+            
+            # Очищаем основные поля
+            self.Номер_кластера.clear()
+            self.Плавка_время_заливки.clear()
+            
+            # Сбрасываем комбобоксы участников на первый элемент (пустой)
+            self.Старший_смены_плавки.setCurrentIndex(0)
+            self.Первый_участник_смены_плавки.setCurrentIndex(0)
+            self.Второй_участник_смены_плавки.setCurrentIndex(0)
+            self.Третий_участник_смены_плавки.setCurrentIndex(0)
+            self.Четвертый_участник_смены_плавки.setCurrentIndex(0)
+            
+            # Сбрасываем наименование и тип эксперимента на первый элемент (пустой)
+            self.Наименование_отливки.setCurrentIndex(0)
+            self.Тип_эксперемента.setCurrentIndex(0)
+            
+            # Очищаем комментарий
+            self.Комментарий.clear()
+            
+            # Очищаем поля секторов
+            for sector in ['A', 'B', 'C', 'D']:
+                # Очищаем номер опоки
+                getattr(self, f'Сектор_{sector}_опоки').clear()
+                
+                # Очищаем все поля сектора и деактивируем их
+                time_fields = [
+                    getattr(self, f'Плавка_время_прогрева_ковша_{sector}'),
+                    getattr(self, f'Плавка_время_перемещения_{sector}'),
+                    getattr(self, f'Плавка_время_заливки_{sector}')
+                ]
+                for field in time_fields:
+                    field.clear()
+                    field.setEnabled(False)
+                
+                # Очищаем и деактивируем поле температуры
+                temp_field = getattr(self, f'Плавка_температура_заливки_{sector}')
+                temp_field.clear()
+                temp_field.setEnabled(False)
+            
+            # Восстанавливаем дату
+            self.Плавка_дата.setDate(current_date)
+            
+            # Устанавливаем значения по умолчанию для временных полей
+            self.set_default_times()
+            
+            logging.info("Форма успешно очищена")
+            
+        except Exception as e:
+            logging.error(f"Ошибка при очистке формы: {str(e)}")
+            QMessageBox.critical(self, "Ошибка", f"Произошла ошибка при очистке формы: {str(e)}")
 
     def show_search_dialog(self):
         dialog = SearchDialog(self)
