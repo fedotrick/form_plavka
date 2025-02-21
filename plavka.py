@@ -20,7 +20,15 @@ from PySide6.QtWidgets import QGraphicsDropShadowEffect
 import time
 
 # В начале файла добавить настройку логирования
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+def get_application_path():
+    if getattr(sys, 'frozen', False):
+        # Если приложение - exe-файл
+        return os.path.dirname(sys.executable)
+    else:
+        # Если приложение запущено как скрипт
+        return os.path.dirname(os.path.abspath(__file__))
+
+SCRIPT_DIR = get_application_path()
 LOG_FILENAME = os.path.join(SCRIPT_DIR, 'plavka.log')
 logging.basicConfig(
     filename=LOG_FILENAME,
