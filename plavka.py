@@ -665,7 +665,7 @@ class MainWindow(QWidget):
         self.Сектор_C_опоки.textChanged.connect(lambda: self.update_sector_fields('C'))
         self.Сектор_D_опоки.textChanged.connect(lambda: self.update_sector_fields('D'))
         
-        # Связываем температуру сектора A с остальными секторами
+        # Связываем температур
         self.Плавка_температура_заливки_A.textChanged.connect(self.sync_temperatures)
         
         # Устанавливаем значения по умолчанию для временных полей
@@ -730,12 +730,12 @@ class MainWindow(QWidget):
                 # Устанавливаем значение по умолчанию при активации
                 field.setText(default_value)
         
-        # Обрабатываем поле температуры
+        # Обрабатываем поле температур
         temp_field.setEnabled(is_active)
         if not is_active:
             temp_field.clear()
         elif sector != 'A':
-            # Для неглавных секторов копируем температуру из A
+            # Для неглавных секторов копируем температур из A
             temp_a = self.Плавка_температура_заливки_A.text()
             if temp_a:
                 temp_field.setText(temp_a)
@@ -746,7 +746,7 @@ class MainWindow(QWidget):
         if not temp_a:
             return
             
-        # Проверяем, что температура в допустимом диапазоне
+        # Проверяем, что температур в допустимом диапазоне
         try:
             temp_value = int(temp_a)
             if not (500 <= temp_value <= 2000):
@@ -994,24 +994,22 @@ class MainWindow(QWidget):
 
             # Сохраняем данные в Excel
             if save_to_excel(data):
-                # Очищаем поля только после успешного сохранения
-                try:
-                    self.clear_fields()
-                    QMessageBox.information(self, 'Успешно', 'Данные успешно сохранены')
-                    return True
-                except Exception as e:
-                    logging.error(f"Ошибка при очистке полей после сохранения: {str(e)}")
-                    QMessageBox.warning(self, 'Внимание', 
-                        'Данные сохранены, но не удалось очистить форму.\nПожалуйста, попробуйте очистить поля вручную.')
-                    return True
+                QMessageBox.information(self, "Успех", "Данные успешно сохранены")
+                
+                # Очищаем форму
+                self.clear_fields()
+                
+                # Генерируем новый номер плавки
+                self.generate_plavka_number()
+                
+                return True
             else:
-                QMessageBox.critical(self, 'Ошибка', 'Не удалось сохранить данные.\nПроверьте, не открыт ли файл в Excel.')
+                QMessageBox.critical(self, "Ошибка", "Не удалось сохранить данные")
                 return False
 
         except Exception as e:
-            error_msg = f"Ошибка при сохранении: {str(e)}"
-            logging.error(error_msg)
-            QMessageBox.critical(self, 'Ошибка', 'Произошла ошибка при сохранении данных.\nПопробуйте еще раз.')
+            logging.error(f"Ошибка при сохранении данных: {str(e)}")
+            QMessageBox.critical(self, "Ошибка", f"Произошла ошибка при сохранении данных: {str(e)}")
             return False
 
     def validate_fields(self):
@@ -1048,7 +1046,7 @@ class MainWindow(QWidget):
         active_sectors = []
         for sector in ['A', 'B', 'C', 'D']:
             sector_field = getattr(self, f'Сектор_{sector}_опоки')
-            if sector_field.text().strip():
+            if sector_field.text().strip():  # Если сектор активен
                 active_sectors.append(sector)
         
         if not active_sectors:
