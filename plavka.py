@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QPushButton, QMessageBox, QLabel, QScrollArea, QFrame,
     QDateEdit, QComboBox, QTableWidget, QTableWidgetItem,
     QHBoxLayout, QDialog, QFileDialog, QGroupBox, QGridLayout,
-    QTabWidget, QTextEdit
+    QTabWidget, QTextEdit, QHeaderView
 )
 from PySide6.QtCore import Qt, QDate
 from PySide6 import QtGui
@@ -1198,45 +1198,115 @@ class StatisticsWidget(QWidget):
             QMessageBox.critical(self, "Ошибка", f"Ошибка при отображении данных: {str(e)}")
     
     def _show_temperature(self, ws, headers):
-        self.data_table.setHorizontalHeaderLabels(["Дата", "Температура"])
+        self.data_table.setColumnCount(3)
+        self.data_table.setHorizontalHeaderLabels(["Дата", "Сектор", "Температура"])
+        self.data_table.setSortingEnabled(True)  # Включаем сортировку
         
         for row in ws.iter_rows(min_row=2, values_only=True):
             data = dict(zip(headers, row))
-            try:
-                temp_A = float(data['Плавка_температура_заливки_A'])
-                temp_B = float(data['Плавка_температура_заливки_B'])
-                temp_C = float(data['Плавка_температура_заливки_C'])
-                temp_D = float(data['Плавка_температура_заливки_D'])
-                date = data['Плавка_дата']
-                
-                row_position = self.data_table.rowCount()
-                self.data_table.insertRow(row_position)
-                
-                self.data_table.setItem(row_position, 0, QTableWidgetItem(date))
-                self.data_table.setItem(row_position, 1, QTableWidgetItem(f"{temp_A}°C"))
-                
-                row_position = self.data_table.rowCount()
-                self.data_table.insertRow(row_position)
-                
-                self.data_table.setItem(row_position, 0, QTableWidgetItem(date))
-                self.data_table.setItem(row_position, 1, QTableWidgetItem(f"{temp_B}°C"))
-                
-                row_position = self.data_table.rowCount()
-                self.data_table.insertRow(row_position)
-                
-                self.data_table.setItem(row_position, 0, QTableWidgetItem(date))
-                self.data_table.setItem(row_position, 1, QTableWidgetItem(f"{temp_C}°C"))
-                
-                row_position = self.data_table.rowCount()
-                self.data_table.insertRow(row_position)
-                
-                self.data_table.setItem(row_position, 0, QTableWidgetItem(date))
-                self.data_table.setItem(row_position, 1, QTableWidgetItem(f"{temp_D}°C"))
-                
-            except (ValueError, TypeError):
-                continue
+            date = data.get('Плавка_дата', '')
+            
+            # Проверяем температур
+            sectors = ['A', 'B', 'C', 'D']
+            for sector in sectors:
+                try:
+                    temp = float(data.get(f'Плавка_температура_заливки_{sector}', 0))
+                    if temp > 0:  # Показываем только если есть температур
+                        row_position = self.data_table.rowCount()
+                        self.data_table.insertRow(row_position)
+                        
+                        self.data_table.setItem(row_position, 0, QTableWidgetItem(date))
+                        self.data_table.setItem(row_position, 1, QTableWidgetItem(f"Сектор {sector}"))
+                        self.data_table.setItem(row_position, 2, QTableWidgetItem(f"{temp}°C"))
+                except (ValueError, TypeError):
+                    continue
+        
+        if self.data_table.rowCount() == 0:
+            QMessageBox.information(self, "Информация", "Нет данных о температур")
+            
+        self.data_table.resizeColumnsToContents()
+
+    def _show_castings(self, ws, headers):
+        """Показывает статистику по отливкам"""
+        self.data_table.setColumnCount(2)
+        self.data_table.setHorizontalHeaderLabels(["Наименование отливки", "Количество"])
+        self.data_table.setSortingEnabled(True)  # Включаем сортировку
+        
+        # Словарь для подсчета количества каждого типа отливки
+        casting_counts = {}
+        
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            data = dict(zip(headers, row))
+            casting_name = data.get('Наименование_отливки', '')
+            if casting_name:
+                casting_counts[casting_name] = casting_counts.get(casting_name, 0) + 1
+        
+        if not casting_counts:
+            QMessageBox.information(self, "Информация", "Нет данных об отливках")
+            return
+            
+        # Отображаем результаты
+        for casting_name, count in sorted(casting_counts.items()):
+            row_position = self.data_table.rowCount()
+            self.data_table.insertRow(row_position)
+            
+            self.data_table.setItem(row_position, 0, QTableWidgetItem(casting_name))
+            self.data_table.setItem(row_position, 1, QTableWidgetItem(str(count)))
         
         self.data_table.resizeColumnsToContents()
+
+    def _show_time_analysis(self, ws, headers):
+        """Показывает временной анализ"""
+        self.data_table.setColumnCount(4)
+        self.data_table.setHorizontalHeaderLabels(["Дата", "Сектор", "Общее время (мин)", "Детализация"])
+        self.data_table.setSortingEnabled(True)  # Включаем сортировку
+        
+        has_data = False
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            data = dict(zip(headers, row))
+            date = data.get('Плавка_дата', '')
+            
+            # Анализируем время для каждого сектора
+            sectors = ['A', 'B', 'C', 'D']
+            for sector in sectors:
+                try:
+                    # Получаем все временные параметры для сектора
+                    heating_time = self._convert_time_to_minutes(data.get(f'Плавка_время_прогрева_ковша_{sector}', '0:00'))
+                    moving_time = self._convert_time_to_minutes(data.get(f'Плавка_время_перемещения_{sector}', '0:00'))
+                    pouring_time = self._convert_time_to_minutes(data.get(f'Плавка_время_заливки_{sector}', '0:00'))
+                    
+                    # Считаем общее время
+                    total_time = heating_time + moving_time + pouring_time
+                    
+                    if total_time > 0:  # Показываем только если есть какие-то данные
+                        has_data = True
+                        row_position = self.data_table.rowCount()
+                        self.data_table.insertRow(row_position)
+                        
+                        details = f"Прогрев: {heating_time}мин, Перемещение: {moving_time}мин, Заливка: {pouring_time}мин"
+                        
+                        self.data_table.setItem(row_position, 0, QTableWidgetItem(date))
+                        self.data_table.setItem(row_position, 1, QTableWidgetItem(f"Сектор {sector}"))
+                        self.data_table.setItem(row_position, 2, QTableWidgetItem(str(total_time)))
+                        self.data_table.setItem(row_position, 3, QTableWidgetItem(details))
+                
+                except (ValueError, TypeError):
+                    continue
+        
+        if not has_data:
+            QMessageBox.information(self, "Информация", "Нет данных о временных параметрах")
+            
+        self.data_table.resizeColumnsToContents()
+
+    def _convert_time_to_minutes(self, time_str):
+        """Конвертирует время из формата ЧЧ:ММ в минуты"""
+        try:
+            if not time_str or time_str == '0:00':
+                return 0
+            hours, minutes = map(int, time_str.split(':'))
+            return hours * 60 + minutes
+        except (ValueError, TypeError):
+            return 0
 
 class SearchDialog(QDialog):
     def __init__(self, parent=None):
@@ -1264,10 +1334,12 @@ class SearchDialog(QDialog):
         self.date_from = QDateEdit()
         self.date_from.setCalendarPopup(True)
         self.date_from.setDisplayFormat("dd.MM.yyyy")
+        self.date_from.dateChanged.connect(self.clear_results)
         self.date_to = QDateEdit()
         self.date_to.setCalendarPopup(True)
         self.date_to.setDisplayFormat("dd.MM.yyyy")
         self.date_to.setDate(QDate.currentDate())
+        self.date_to.dateChanged.connect(self.clear_results)
         
         filter_layout.addWidget(QLabel("Дата с:"), 0, 0)
         filter_layout.addWidget(self.date_from, 0, 1)
@@ -1280,12 +1352,30 @@ class SearchDialog(QDialog):
             "Вороток", "Ригель", "Ригель optima", "Блок-картер", "Колесо РИТМ",
             "Накладка резьб", "Блок цилиндров", "Диагональ optima", "Кольцо"
         ])
+        self.filter_casting.currentIndexChanged.connect(self.clear_results)
         filter_layout.addWidget(QLabel("Тип отливки:"), 1, 0)
         filter_layout.addWidget(self.filter_casting, 1, 1)
+        
+        # Фильтр по участнику
+        self.filter_participant = QComboBox()
+        self.filter_participant.addItem("Все")
+        self.load_participants()
+        self.filter_participant.currentIndexChanged.connect(self.clear_results)
+        filter_layout.addWidget(QLabel("Участник:"), 1, 2)
+        filter_layout.addWidget(self.filter_participant, 1, 3)
         
         # Фильтр по температуре
         self.temp_from = QLineEdit()
         self.temp_to = QLineEdit()
+        # Добавляем валидацию температур
+        temp_validator = QtGui.QIntValidator(500, 2000)
+        self.temp_from.setValidator(temp_validator)
+        self.temp_to.setValidator(temp_validator)
+        self.temp_from.setPlaceholderText("500-2000")
+        self.temp_to.setPlaceholderText("500-2000")
+        self.temp_from.textChanged.connect(self.clear_results)
+        self.temp_to.textChanged.connect(self.clear_results)
+        
         filter_layout.addWidget(QLabel("Температура от:"), 2, 0)
         filter_layout.addWidget(self.temp_from, 2, 1)
         filter_layout.addWidget(QLabel("до:"), 2, 2)
@@ -1309,6 +1399,13 @@ class SearchDialog(QDialog):
         self.results_table = QTableWidget()
         self.results_table.setColumnCount(len(SEARCH_FIELDS))
         self.results_table.setHorizontalHeaderLabels(SEARCH_FIELDS)
+        self.results_table.setSortingEnabled(True)  # Включаем сортировку
+        self.results_table.setSelectionBehavior(QTableWidget.SelectRows)  # Выбор строк целиком
+        self.results_table.setSelectionMode(QTableWidget.SingleSelection)  # Только одна строка
+        self.results_table.horizontalHeader().setStretchLastSection(True)  # Растягиваем последний столбец
+        # Устанавливаем размеры столбцов
+        header = self.results_table.horizontalHeader()
+        header.setSectionResizeMode(header.ResizeMode.ResizeToContents)
         search_layout.addWidget(self.results_table)
         
         self.tab_widget.addTab(search_tab, "Результаты поиска")
@@ -1333,6 +1430,7 @@ class SearchDialog(QDialog):
         button_layout = QHBoxLayout()
         self.search_button = QPushButton("Поиск")
         self.edit_button = QPushButton("Редактировать")
+        self.edit_button.setEnabled(False)  # Disable by default
         self.export_button = QPushButton("Экспорт")
         self.stats_button = QPushButton("Обновить статистику")
         self.backup_button = QPushButton("Создать резервную копию")
@@ -1350,7 +1448,12 @@ class SearchDialog(QDialog):
         self.export_button.clicked.connect(self.export_results)
         self.stats_button.clicked.connect(self.update_statistics)
         self.backup_button.clicked.connect(self.create_backup)
-
+        self.results_table.itemSelectionChanged.connect(self.on_selection_changed)
+        
+    def on_selection_changed(self):
+        """Enable edit button only when a record is selected"""
+        self.edit_button.setEnabled(len(self.results_table.selectedItems()) > 0)
+        
     def apply_filters(self, row, headers):
         """Применяет фильтры к записи"""
         try:
@@ -1366,16 +1469,32 @@ class SearchDialog(QDialog):
                data['Наименование_отливки'] != self.filter_casting.currentText():
                 return False
             
+            # Фильтр по участнику
+            if self.filter_participant.currentText() != "Все":
+                participant = self.filter_participant.currentText()
+                if participant not in [
+                    data['Старший_смены_плавки'],
+                    data['Первый_участник_смены_плавки'],
+                    data['Второй_участник_смены_плавки'],
+                    data['Третий_участник_смены_плавки'],
+                    data['Четвертый_участник_смены_плавки']
+                ]:
+                    return False
+            
             # Фильтр по температуре
             if self.temp_from.text() and self.temp_to.text():
                 try:
-                    temp_A = float(data['Плавка_температура_заливки_A'])
-                    temp_B = float(data['Плавка_температура_заливки_B'])
-                    temp_C = float(data['Плавка_температура_заливки_C'])
-                    temp_D = float(data['Плавка_температура_заливки_D'])
+                    temps = [
+                        float(data['Плавка_температура_заливки_A']),
+                        float(data['Плавка_температура_заливки_B']),
+                        float(data['Плавка_температура_заливки_C']),
+                        float(data['Плавка_температура_заливки_D'])
+                    ]
                     temp_from = float(self.temp_from.text())
                     temp_to = float(self.temp_to.text())
-                    if not (temp_from <= temp_A <= temp_to) and not (temp_from <= temp_B <= temp_to) and not (temp_from <= temp_C <= temp_to) and not (temp_from <= temp_D <= temp_to):
+                    
+                    # Проверяем, что хотя бы одна температур в диапазоне
+                    if not any(temp_from <= temp <= temp_to for temp in temps if temp):
                         return False
                 except ValueError:
                     pass
@@ -1385,6 +1504,31 @@ class SearchDialog(QDialog):
             logging.error(f"Ошибка при применении фильтров: {str(e)}")
             return False
 
+    def load_participants(self):
+        """Загружает список участников из файла Excel"""
+        try:
+            if not os.path.exists(EXCEL_FILENAME):
+                return
+                
+            wb = load_workbook(EXCEL_FILENAME, read_only=True)
+            ws = wb.active
+            headers = [cell.value for cell in ws[1]]
+            
+            participants = set()
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                data = dict(zip(headers, row))
+                participants.add(data['Старший_смены_плавки'])
+                participants.add(data['Первый_участник_смены_плавки'])
+                participants.add(data['Второй_участник_смены_плавки'])
+                participants.add(data['Третий_участник_смены_плавки'])
+                participants.add(data['Четвертый_участник_смены_плавки'])
+            
+            self.filter_participant.addItems(sorted(participants))
+            wb.close()
+            
+        except Exception as e:
+            logging.error(f"Ошибка при загрузке списка участников: {str(e)}")
+            
     def update_statistics(self):
         """Обновляет статистику по данным"""
         try:
@@ -1530,11 +1674,67 @@ class SearchDialog(QDialog):
                 if "xlsx" in selected_format:
                     df.to_excel(file_name, index=False)
                 elif "csv" in selected_format:
-                    df.to_csv(file_name, index=False)
+                    df.to_csv(file_name, index=False, encoding='utf-8-sig')  # Поддержка кириллицы
                 elif "pdf" in selected_format:
-                    # Для PDF потребуется дополнительная настройка
-                    df.to_html(file_name.replace('.pdf', '.html'))
-                    # Конвертация HTML в PDF (требуется дополнительная библиотека)
+                    try:
+                        import pdfkit
+                        # Создаем красивый HTML с использованием стилей
+                        html = f"""
+                        <html>
+                        <head>
+                            <meta charset="UTF-8">
+                            <style>
+                                table {{
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    margin: 20px 0;
+                                    font-family: Arial, sans-serif;
+                                }}
+                                th, td {{
+                                    padding: 12px;
+                                    text-align: left;
+                                    border-bottom: 1px solid #ddd;
+                                }}
+                                th {{
+                                    background-color: #5e81ac;
+                                    color: white;
+                                }}
+                                tr:nth-child(even) {{
+                                    background-color: #f9f9f9;
+                                }}
+                                tr:hover {{
+                                    background-color: #f5f5f5;
+                                }}
+                                h1 {{
+                                    color: #2e3440;
+                                    font-family: Arial, sans-serif;
+                                    text-align: center;
+                                    margin: 20px 0;
+                                }}
+                            </style>
+                        </head>
+                        <body>
+                            <h1>Отчет по плавкам</h1>
+                            {df.to_html(index=False)}
+                        </body>
+                        </html>
+                        """
+                        
+                        # Конвертируем HTML в PDF
+                        pdfkit.from_string(html, file_name, options={
+                            'encoding': 'UTF-8',
+                            'page-size': 'A4',
+                            'margin-top': '20mm',
+                            'margin-right': '20mm',
+                            'margin-bottom': '20mm',
+                            'margin-left': '20mm'
+                        })
+                    except ImportError:
+                        QMessageBox.warning(self, "Предупреждение", 
+                            "Для экспорта в PDF требуется установить пакет pdfkit и wkhtmltopdf")
+                        return
+                    except Exception as e:
+                        raise Exception(f"Ошибка при создании PDF: {str(e)}")
                 
                 QMessageBox.information(self, "Успех", "Данные успешно экспортированы")
                 
@@ -1568,6 +1768,11 @@ class SearchDialog(QDialog):
             logging.error(f"Ошибка при создании резервной копии: {str(e)}")
             QMessageBox.critical(self, "Ошибка", 
                 f"Ошибка при создании резервной копии: {str(e)}")
+
+    def clear_results(self):
+        """Очищает результаты поиска при изменении фильтров"""
+        self.results_table.setRowCount(0)
+        self.stats_text.clear()
 
 class EditRecordDialog(QDialog):
     def __init__(self, record_id, parent=None):
@@ -1913,6 +2118,7 @@ class EditRecordDialog(QDialog):
                 logging.debug("Попытка сохранения изменений")
                 try:
                     wb.save(EXCEL_FILENAME)
+                    wb.close()
                     logging.info(f"Изменения для записи {self.record_id} успешно сохранены")
                     QMessageBox.information(self, "Успех", "Изменения сохранены")
                     self.accept()
@@ -1978,6 +2184,60 @@ class EditRecordDialog(QDialog):
         except Exception as e:
             logging.error(f"Ошибка при заполнении полей: {str(e)}")
             raise
+
+    def validate_fields(self):
+        """Проверка полей на корректность"""
+        try:
+            # Проверяем обязательные поля
+            if not self.Номер_плавки.text().strip():
+                raise ValueError("Номер плавки обязателен")
+                
+            if not self.Номер_кластера.text().strip():
+                raise ValueError("Номер кластера обязателен")
+                
+            # Проверяем корректность времени
+            time_fields = [
+                (self.Плавка_время_прогрева_ковша_A, "Время прогрева ковша A"),
+                (self.Плавка_время_перемещения_A, "Время перемещения A"),
+                (self.Плавка_время_заливки_A, "Время заливки A"),
+                (self.Плавка_время_прогрева_ковша_B, "Время прогрева ковша B"),
+                (self.Плавка_время_перемещения_B, "Время перемещения B"),
+                (self.Плавка_время_заливки_B, "Время заливки B"),
+                (self.Плавка_время_прогрева_ковша_C, "Время прогрева ковша C"),
+                (self.Плавка_время_перемещения_C, "Время перемещения C"),
+                (self.Плавка_время_заливки_C, "Время заливки C"),
+                (self.Плавка_время_прогрева_ковша_D, "Время прогрева ковша D"),
+                (self.Плавка_время_перемещения_D, "Время перемещения D"),
+                (self.Плавка_время_заливки_D, "Время заливки D")
+            ]
+            
+            for field, name in time_fields:
+                if field.text().strip() and not self.validate_time(field.text().strip()):
+                    raise ValueError(f"Некорректный формат времени в поле {name}")
+                    
+            # Проверяем температур
+            temp_fields = [
+                (self.Плавка_температура_заливки_A, "Температура заливки A"),
+                (self.Плавка_температура_заливки_B, "Температура заливки B"),
+                (self.Плавка_температура_заливки_C, "Температура заливки C"),
+                (self.Плавка_температура_заливки_D, "Температура заливки D")
+            ]
+            
+            for field, name in temp_fields:
+                temp = field.text().strip()
+                if temp:
+                    try:
+                        temp_val = int(temp)
+                        if not (500 <= temp_val <= 2000):
+                            raise ValueError(f"Температура в поле {name} должна быть от 500 до 2000°C")
+                    except ValueError:
+                        raise ValueError(f"Некорректное значение температур в поле {name}")
+            
+            return True
+            
+        except ValueError as e:
+            QMessageBox.warning(self, "Ошибка валидации", str(e))
+            return False
 
 def ensure_excel_file_exists():
     """Проверяет существование файла Excel и создает его если его нет"""
