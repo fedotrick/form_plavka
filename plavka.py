@@ -29,14 +29,13 @@ logging.basicConfig(
 )
 
 # Вынести настройки в отдельные константы
-DATA_DIR = os.path.join(SCRIPT_DIR, 'data')
-EXCEL_FILENAME = os.path.join(DATA_DIR, 'plavka.xlsx')
+EXCEL_FILENAME = os.path.join(SCRIPT_DIR, 'plavka.xlsx')
 
 # Создаем директорию для данных, если её нет
-if not os.path.exists(DATA_DIR):
+if not os.path.exists(os.path.dirname(EXCEL_FILENAME)):
     try:
-        os.makedirs(DATA_DIR)
-        logging.info(f"Создана директория для данных: {DATA_DIR}")
+        os.makedirs(os.path.dirname(EXCEL_FILENAME))
+        logging.info(f"Создана директория для данных: {os.path.dirname(EXCEL_FILENAME)}")
     except Exception as e:
         logging.error(f"Не удалось создать директорию для данных: {e}")
 
@@ -761,9 +760,11 @@ class MainWindow(QWidget):
                 temp_field.setText(temp_a)
 
     def generate_plavka_number(self):
+        current_month = self.Плавка_дата.date().month()
+        current_year = self.Плавка_дата.date().year()
+        next_number = 1
+        
         try:
-            current_month = self.Плавка_дата.date().month()
-            
             if os.path.exists(EXCEL_FILENAME):
                 df = pd.read_excel(EXCEL_FILENAME)
                 if not df.empty:
@@ -771,7 +772,6 @@ class MainWindow(QWidget):
                     df['Плавка_дата'] = pd.to_datetime(df['Плавка_дата'], format='%d.%m.%Y')
                     
                     # Фильтруем записи только текущего месяца и года
-                    current_year = self.Плавка_дата.date().year()
                     current_month_records = df[
                         (df['Плавка_дата'].dt.month == current_month) & 
                         (df['Плавка_дата'].dt.year == current_year)
@@ -785,21 +785,16 @@ class MainWindow(QWidget):
                                 if isinstance(num, str) and '-' in num:
                                     month_str, number = num.split('-')
                                     # Приводим месяц к числу, убирая ведущие нули
-                                    try:
-                                        month_num = int(month_str)
-                                        if month_num == current_month:
-                                            last_numbers.append(int(number))
-                                    except ValueError:
-                                        continue
+                                    month_num = int(month_str)
+                                    if month_num == current_month:
+                                        last_numbers.append(int(number))
                             except (ValueError, TypeError):
                                 continue
                         
-                        next_number = max(last_numbers) + 1 if last_numbers else 1
-            else:
-                next_number = 1
+                        if last_numbers:
+                            next_number = max(last_numbers) + 1
             
             # Форматируем номер плавки: месяц-номер(с ведущими нулями)
-            # Используем тот же формат, что и в существующих записях (без ведущего нуля в месяце)
             new_plavka_number = f"{current_month}-{str(next_number).zfill(3)}"
             self.Номер_плавки.setText(new_plavka_number)
             
@@ -808,7 +803,14 @@ class MainWindow(QWidget):
             
         except Exception as e:
             logging.error(f"Ошибка при генерации номера плавки: {str(e)}")
-            self.Номер_плавки.setText("")
+            # Всё равно пытаемся сгенерировать номер плавки для нового месяца
+            try:
+                new_plavka_number = f"{current_month}-{str(next_number).zfill(3)}"
+                self.Номер_плавки.setText(new_plavka_number)
+                self.update_uchet_number()
+            except Exception as inner_e:
+                logging.error(f"Критическая ошибка при генерации номера плавки: {str(inner_e)}")
+                self.Номер_плавки.setText("")
 
     def update_uchet_number(self):
         """Обновляет учетный номер на основе номера плавки"""
@@ -1113,7 +1115,7 @@ class MainWindow(QWidget):
                     field.clear()
                     field.setEnabled(False)
                 
-                # Очищаем и деактивируем поле температуры
+                # Очищаем и деактивируем поле температур
                 temp_field = getattr(self, f'Плавка_температура_заливки_{sector}')
                 temp_field.clear()
                 temp_field.setEnabled(False)
@@ -1974,8 +1976,8 @@ def ensure_excel_file_exists():
     if not os.path.exists(EXCEL_FILENAME):
         try:
             # Создаем директорию если ее нет
-            if not os.path.exists(DATA_DIR):
-                os.makedirs(DATA_DIR)
+            if not os.path.exists(os.path.dirname(EXCEL_FILENAME)):
+                os.makedirs(os.path.dirname(EXCEL_FILENAME))
             
             # Создаем файл Excel
             wb = Workbook()
