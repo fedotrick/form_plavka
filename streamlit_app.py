@@ -4,9 +4,12 @@ import sqlite3
 from io import BytesIO
 import plotly.express as px
 import re
+import os
+from openpyxl import load_workbook
 
 DB_FILE = 'plavka.db'
 TABLE_NAME = 'Плавки'
+EXCEL_FILE = 'plavka.xlsx'
 
 st.set_page_config(page_title="Электронный журнал плавки", layout="wide")
 st.title("Электронный журнал плавки")
@@ -126,6 +129,11 @@ def parse_import_message(text):
 # Основные вкладки
 menu = st.sidebar.radio("Навигация", ["Таблица", "Добавить запись", "Экспорт в Excel", "Аналитика и статистика", "Импорт из сообщения", "О программе"])
 
+# Кнопка обновления данных в сайдбаре
+if st.sidebar.button("🔄 Обновить данные"):
+    st.cache_data.clear()
+    st.rerun()
+
 df = load_data()
 
 if menu == "Таблица":
@@ -226,10 +234,14 @@ elif menu == "Добавить запись":
             # Генерация служебных полей по новым правилам
             id_plavka = generate_id_plavka(Плавка_дата, Номер_плавки)
             uchet_number = generate_uchet_number(Плавка_дата, Номер_плавки)
+            
+            # Форматируем дату в DD.MM.YYYY
+            formatted_date = Плавка_дата.strftime('%d.%m.%Y')
+            
             new_row = {
                 'id_plavka': id_plavka,
                 'Учетный_номер': uchet_number,
-                'Плавка_дата': str(Плавка_дата),
+                'Плавка_дата': formatted_date,
                 'Номер_плавки': Номер_плавки,
                 'Номер_кластера': Номер_кластера,
                 'Старший_смены_плавки': Старший_смены_плавки,
@@ -262,6 +274,8 @@ elif menu == "Добавить запись":
                 'Комментарий': Комментарий,
                 'Плавка_время_заливки': Плавка_время_заливки
             }
+            
+            # Сохраняем в SQLite
             conn = sqlite3.connect(DB_FILE)
             columns = ','.join(new_row.keys())
             placeholders = ','.join(['?'] * len(new_row))
@@ -269,7 +283,18 @@ elif menu == "Добавить запись":
             conn.execute(sql, list(new_row.values()))
             conn.commit()
             conn.close()
-            st.success("Запись успешно добавлена! Обновите страницу для просмотра новой записи.")
+            
+            # Сохраняем в Excel
+            add_to_excel(new_row)
+            
+            # Очищаем кэш данных и перезагружаем страницу
+            st.cache_data.clear()
+            st.success("Запись успешно добавлена!")
+            
+            # Добавляем кнопку для просмотра добавленной записи
+            if st.button("Показать все записи"):
+                menu = "Таблица"
+                st.rerun()
 
 elif menu == "Экспорт в Excel":
     st.subheader("Экспортировать все данные в Excel")
@@ -385,6 +410,8 @@ elif menu == "Импорт из сообщения":
                     'Плавка_время_заливки': rec.get('Плавка_время_заливки_A', ''),
                     'Маршрутная_карта': rec.get('Маршрутная_карта', ''),
                 }
+                
+                # Сохраняем в SQLite
                 conn = sqlite3.connect(DB_FILE)
                 columns = ','.join(new_row.keys())
                 placeholders = ','.join(['?'] * len(new_row))
@@ -392,16 +419,70 @@ elif menu == "Импорт из сообщения":
                 conn.execute(sql, list(new_row.values()))
                 conn.commit()
                 conn.close()
+                
+                # Сохраняем в Excel
+                add_to_excel(new_row)
+                
                 added += 1
             except Exception as e:
                 errors += 1
                 st.error(f"Ошибка при добавлении записи с Учетным номером {uchet}: {e}")
+        
         st.success(f"Импортировано записей: {added}. Ошибок: {errors}.")
+        
+        # Очищаем кэш данных
+        st.cache_data.clear()
+        
+        # Добавляем кнопку для просмотра добавленных записей
+        if added > 0 and st.button("Показать импортированные записи"):
+            menu = "Таблица"
+            st.rerun()
 
 elif menu == "О программе":
     st.markdown("""
     ### Электронный журнал плавки
     - Веб-приложение на Streamlit
-    - Данные хранятся в SQLite с кириллическими названиями столбцов
-    - Возможности: просмотр, фильтрация, экспорт, добавление записей (в разработке)
-    """) 
+    - Данные хранятся в SQLite и Excel
+    - Возможности: просмотр, фильтрация, экспорт, добавление записей
+    
+    **Особенности новой версии:**
+    - Автоматическое сохранение данных в Excel и SQLite
+    - Улучшенный интерфейс
+    - Возможность быстрого просмотра добавленных записей
+    - Кнопка обновления данных
+    """)
+
+# Функция для добавления новой записи в Excel
+def add_to_excel(new_row):
+    try:
+        if not os.path.exists(EXCEL_FILE):
+            # Если файл не существует, создаем новый с заголовками
+            df = pd.DataFrame([new_row])
+            df.to_excel(EXCEL_FILE, index=False, engine='openpyxl')
+            st.success(f"Данные сохранены в новый файл {EXCEL_FILE}")
+            return True
+        
+        # Загружаем существующий файл
+        wb = load_workbook(EXCEL_FILE)
+        ws = wb.active
+        
+        # Проверяем, совпадают ли заголовки
+        headers = [cell.value for cell in ws[1]]
+        
+        # Добавляем новую строку
+        row_values = []
+        for header in headers:
+            if header in new_row:
+                row_values.append(new_row[header])
+            else:
+                row_values.append(None)
+        
+        ws.append(row_values)
+        
+        # Сохраняем изменения
+        wb.save(EXCEL_FILE)
+        st.success(f"Данные также сохранены в Excel файл {EXCEL_FILE}")
+        return True
+    except Exception as e:
+        st.error(f"Ошибка при сохранении в Excel: {str(e)}")
+        return False 
