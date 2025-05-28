@@ -20,6 +20,10 @@ def load_data():
     return df
 
 def save_to_excel(df):
+    # Приведение номеров опок к строке без .0
+    for col in ['Сектор_A_опоки', 'Сектор_B_опоки', 'Сектор_C_опоки', 'Сектор_D_опоки']:
+        if col in df.columns:
+            df[col] = df[col].apply(lambda x: str(int(x)) if pd.notnull(x) and isinstance(x, float) and x.is_integer() else str(x) if pd.notnull(x) else '')
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False)
@@ -52,8 +56,75 @@ def generate_uchet_number(date, num):
     nnn = parse_plavka_number(num)
     return f"{date.month:02d}-{nnn}/{str(date.year)[-2:]}"
 
+def parse_import_message(text):
+    # Парсим дату смены из шапки
+    m = re.search(r'📅 ([0-9]{2}\.[0-9]{2}\.[0-9]{4})', text)
+    plavka_date = m.group(1) if m else ''
+    # Парсим старшего смены и участников из шапки
+    m = re.search(r'Старший: ([^\n]+)', text)
+    starshiy = m.group(1).strip() if m else ''
+    m = re.search(r'Участники: ([^\n]+)', text)
+    uchastniki = [x.strip() for x in m.group(1).split(',')] if m else []
+    # Разбиваем на блоки по плавкам
+    blocks = re.split(r'📊 Плавка \d+/\d+', text)
+    results = []
+    for block in blocks:
+        if 'Маршрутная карта' not in block:
+            continue
+        data = {}
+        # Дата смены для каждой плавки
+        data['Плавка_дата'] = plavka_date
+        # Старший смены и участники
+        data['Старший_смены_плавки'] = starshiy
+        for i, field in enumerate(['Первый_участник_смены_плавки', 'Второй_участник_смены_плавки', 'Третий_участник_смены_плавки', 'Четвертый_участник_смены_плавки']):
+            data[field] = uchastniki[i] if i < len(uchastniki) else ''
+        # Маршрутная карта
+        m = re.search(r'Маршрутная карта: (\d+)', block)
+        if m:
+            data['Маршрутная_карта'] = m.group(1)
+        # Учетный номер
+        m = re.search(r'Учетный номер: ([0-9]{2}-[0-9]{3}/[0-9]{2})', block)
+        if m:
+            data['Учетный_номер'] = m.group(1)
+        # Кластер
+        m = re.search(r'Кластер: ([^\n]+)', block)
+        if m:
+            data['Номер_кластера'] = m.group(1)
+        # Отливка
+        m = re.search(r'Отливка: ([^\n]+)', block)
+        if m:
+            data['Наименование_отливки'] = m.group(1)
+        # Литниковая система
+        m = re.search(r'Литниковая система: ([^\n]+)', block)
+        if m:
+            data['Тип_эксперемента'] = m.group(1)
+        # Опоки
+        m = re.search(r'Опоки: ([^\n]+)', block)
+        opoki = []
+        if m:
+            opoki = [x.strip().replace('Опока №', '') for x in m.group(1).split(',')]
+            opoki = [str(int(o)) if o.isdigit() or (o.replace('.','',1).isdigit() and float(o).is_integer()) else o for o in opoki]
+        # Температура
+        m = re.search(r'Температура: ([0-9]+[.,]?[0-9]*)', block)
+        temp = float(m.group(1).replace(',', '.')) if m else None
+        # Время слива
+        m = re.search(r'Время слива: ([0-9]{2}:[0-9]{2})', block)
+        time_val = m.group(1) if m else ''
+        # Заполняем сектора (A, B), остальные пустые
+        for i, sector in enumerate(['A', 'B', 'C', 'D']):
+            if i < len(opoki):
+                data[f'Сектор_{sector}_опоки'] = opoki[i]
+                data[f'Плавка_температура_заливки_{sector}'] = temp
+                data[f'Плавка_время_заливки_{sector}'] = time_val
+            else:
+                data[f'Сектор_{sector}_опоки'] = ''
+                data[f'Плавка_температура_заливки_{sector}'] = None
+                data[f'Плавка_время_заливки_{sector}'] = ''
+        results.append(data)
+    return results
+
 # Основные вкладки
-menu = st.sidebar.radio("Навигация", ["Таблица", "Добавить запись", "Экспорт в Excel", "Аналитика и статистика", "О программе"])
+menu = st.sidebar.radio("Навигация", ["Таблица", "Добавить запись", "Экспорт в Excel", "Аналитика и статистика", "Импорт из сообщения", "О программе"])
 
 df = load_data()
 
@@ -251,6 +322,64 @@ elif menu == "Аналитика и статистика":
             part_counts = part_series.value_counts()
             fig = px.bar(x=part_counts.index, y=part_counts.values, labels={'x': 'Участник', 'y': 'Количество участий'}, title="Участники во всех плавках")
             st.plotly_chart(fig, use_container_width=True)
+
+elif menu == "Импорт из сообщения":
+    st.subheader("Импорт из текстового сообщения")
+    msg = st.text_area("Вставьте сообщение со статистикой по смене:", height=400)
+    if st.button("Импортировать"):
+        parsed = parse_import_message(msg)
+        added, errors = 0, 0
+        for rec in parsed:
+            try:
+                # Генерация служебных полей
+                uchet = rec.get('Учетный_номер', '')
+                # Парсим дату из учетного номера (MM-NNN/YY)
+                if re.match(r'[0-9]{2}-[0-9]{3}/[0-9]{2}', uchet):
+                    mm, nnn_yy = uchet.split('-')
+                    nnn, yy = nnn_yy.split('/')
+                    year = int('20' + yy)
+                    month = int(mm)
+                    # Дата — первое число месяца
+                    plavka_date = f"{year}-{month:02d}-01"
+                else:
+                    plavka_date = ''
+                id_plavka = f"{year}{month:02d}{nnn}"
+                new_row = {
+                    'id_plavka': id_plavka,
+                    'Учетный_номер': uchet,
+                    'Плавка_дата': plavka_date,
+                    'Номер_плавки': f"{month}-{nnn}",
+                    'Номер_кластера': rec.get('Номер_кластера', ''),
+                    'Наименование_отливки': rec.get('Наименование_отливки', ''),
+                    'Тип_эксперемента': rec.get('Тип_эксперемента', ''),
+                    'Сектор_A_опоки': rec.get('Сектор_A_опоки', ''),
+                    'Сектор_B_опоки': rec.get('Сектор_B_опоки', ''),
+                    'Сектор_C_опоки': rec.get('Сектор_C_опоки', ''),
+                    'Сектор_D_опоки': rec.get('Сектор_D_опоки', ''),
+                    'Плавка_температура_заливки_A': rec.get('Плавка_температура_заливки_A', None),
+                    'Плавка_температура_заливки_B': rec.get('Плавка_температура_заливки_B', None),
+                    'Плавка_температура_заливки_C': rec.get('Плавка_температура_заливки_C', None),
+                    'Плавка_температура_заливки_D': rec.get('Плавка_температура_заливки_D', None),
+                    'Плавка_время_заливки_A': rec.get('Плавка_время_заливки_A', ''),
+                    'Плавка_время_заливки_B': rec.get('Плавка_время_заливки_B', ''),
+                    'Плавка_время_заливки_C': rec.get('Плавка_время_заливки_C', ''),
+                    'Плавка_время_заливки_D': rec.get('Плавка_время_заливки_D', ''),
+                    'Плавка_время_заливки': rec.get('Плавка_время_заливки_A', ''),
+                    'Маршрутная_карта': rec.get('Маршрутная_карта', ''),
+                    # Остальные поля пустые или по умолчанию
+                }
+                conn = sqlite3.connect(DB_FILE)
+                columns = ','.join(new_row.keys())
+                placeholders = ','.join(['?'] * len(new_row))
+                sql = f"INSERT INTO {TABLE_NAME} ({columns}) VALUES ({placeholders})"
+                conn.execute(sql, list(new_row.values()))
+                conn.commit()
+                conn.close()
+                added += 1
+            except Exception as e:
+                errors += 1
+                st.error(f"Ошибка при добавлении записи с Учетным номером {uchet}: {e}")
+        st.success(f"Импортировано записей: {added}. Ошибок: {errors}.")
 
 elif menu == "О программе":
     st.markdown("""

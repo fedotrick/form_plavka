@@ -33,5 +33,6 @@ CREATE TABLE IF NOT EXISTS Плавки (
     Плавка_температура_заливки_D INTEGER,
     Комментарий TEXT,
     Плавка_время_заливки TEXT,
+    Маршрутная_карта TEXT,
     id INTEGER PRIMARY KEY AUTOINCREMENT
 ); 

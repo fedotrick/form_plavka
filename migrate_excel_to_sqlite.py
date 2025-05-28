@@ -12,6 +12,10 @@ if not os.path.exists(EXCEL_FILE):
 
 df = pd.read_excel(EXCEL_FILE, engine='openpyxl')
 
+# Копировать 'Плавка_дата' как строку из Excel
+if 'Плавка_дата' in df.columns:
+    df['Плавка_дата'] = df['Плавка_дата'].astype(str)
+
 # Приведение типов (температуры к int, если возможно)
 for col in [
     'Плавка_температура_заливки_A',
@@ -20,6 +24,11 @@ for col in [
     'Плавка_температура_заливки_D']:
     if col in df.columns:
         df[col] = pd.to_numeric(df[col], errors='coerce').astype('Int64')
+
+# Приведение номеров опок к строке без .0
+for col in ['Сектор_A_опоки', 'Сектор_B_опоки', 'Сектор_C_опоки', 'Сектор_D_опоки']:
+    if col in df.columns:
+        df[col] = df[col].apply(lambda x: str(int(x)) if pd.notnull(x) and isinstance(x, float) and x.is_integer() else str(x) if pd.notnull(x) else '')
 
 # Преобразуем все значения типа datetime.time к строке формата 'HH:MM'
 for col in df.columns:
