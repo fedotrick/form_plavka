@@ -1,6 +1,7 @@
 import pandas as pd
 import sqlite3
 import os
+import datetime
 
 EXCEL_FILE = 'plavka.xlsx'
 SQLITE_DB = 'plavka.db'
@@ -12,9 +13,9 @@ if not os.path.exists(EXCEL_FILE):
 
 df = pd.read_excel(EXCEL_FILE, engine='openpyxl')
 
-# Копировать 'Плавка_дата' как строку из Excel
+# Копировать 'Плавка_дата' как строку из Excel в формате DD.MM.YYYY
 if 'Плавка_дата' in df.columns:
-    df['Плавка_дата'] = df['Плавка_дата'].astype(str)
+    df['Плавка_дата'] = df['Плавка_дата'].apply(lambda x: x.strftime('%d.%m.%Y') if isinstance(x, (datetime.datetime, pd.Timestamp)) else x)
 
 # Приведение типов (температуры к int, если возможно)
 for col in [
