@@ -22,6 +22,41 @@ def load_data():
     conn.close()
     return df
 
+# Функция для добавления новой записи в Excel
+def add_to_excel(new_row):
+    try:
+        if not os.path.exists(EXCEL_FILE):
+            # Если файл не существует, создаем новый с заголовками
+            df = pd.DataFrame([new_row])
+            df.to_excel(EXCEL_FILE, index=False, engine='openpyxl')
+            st.success(f"Данные сохранены в новый файл {EXCEL_FILE}")
+            return True
+        
+        # Загружаем существующий файл
+        wb = load_workbook(EXCEL_FILE)
+        ws = wb.active
+        
+        # Проверяем, совпадают ли заголовки
+        headers = [cell.value for cell in ws[1]]
+        
+        # Добавляем новую строку
+        row_values = []
+        for header in headers:
+            if header in new_row:
+                row_values.append(new_row[header])
+            else:
+                row_values.append(None)
+        
+        ws.append(row_values)
+        
+        # Сохраняем изменения
+        wb.save(EXCEL_FILE)
+        st.success(f"Данные также сохранены в Excel файл {EXCEL_FILE}")
+        return True
+    except Exception as e:
+        st.error(f"Ошибка при сохранении в Excel: {str(e)}")
+        return False
+
 def save_to_excel(df):
     # Приведение номеров опок к строке без .0
     for col in ['Сектор_A_опоки', 'Сектор_B_опоки', 'Сектор_C_опоки', 'Сектор_D_опоки']:
@@ -450,39 +485,4 @@ elif menu == "О программе":
     - Улучшенный интерфейс
     - Возможность быстрого просмотра добавленных записей
     - Кнопка обновления данных
-    """)
-
-# Функция для добавления новой записи в Excel
-def add_to_excel(new_row):
-    try:
-        if not os.path.exists(EXCEL_FILE):
-            # Если файл не существует, создаем новый с заголовками
-            df = pd.DataFrame([new_row])
-            df.to_excel(EXCEL_FILE, index=False, engine='openpyxl')
-            st.success(f"Данные сохранены в новый файл {EXCEL_FILE}")
-            return True
-        
-        # Загружаем существующий файл
-        wb = load_workbook(EXCEL_FILE)
-        ws = wb.active
-        
-        # Проверяем, совпадают ли заголовки
-        headers = [cell.value for cell in ws[1]]
-        
-        # Добавляем новую строку
-        row_values = []
-        for header in headers:
-            if header in new_row:
-                row_values.append(new_row[header])
-            else:
-                row_values.append(None)
-        
-        ws.append(row_values)
-        
-        # Сохраняем изменения
-        wb.save(EXCEL_FILE)
-        st.success(f"Данные также сохранены в Excel файл {EXCEL_FILE}")
-        return True
-    except Exception as e:
-        st.error(f"Ошибка при сохранении в Excel: {str(e)}")
-        return False 
+    """) 
