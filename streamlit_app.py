@@ -25,36 +25,83 @@ def load_data():
 # Функция для добавления новой записи в Excel
 def add_to_excel(new_row):
     try:
+        # Создаем резервную копию файла, если он существует
+        if os.path.exists(EXCEL_FILE):
+            backup_file = f"{EXCEL_FILE}.bak"
+            try:
+                import shutil
+                shutil.copy2(EXCEL_FILE, backup_file)
+            except Exception as e:
+                st.warning(f"Не удалось создать резервную копию: {str(e)}")
+        
         if not os.path.exists(EXCEL_FILE):
             # Если файл не существует, создаем новый с заголовками
             df = pd.DataFrame([new_row])
-            df.to_excel(EXCEL_FILE, index=False, engine='openpyxl')
-            st.success(f"Данные сохранены в новый файл {EXCEL_FILE}")
-            return True
+            try:
+                df.to_excel(EXCEL_FILE, index=False, engine='openpyxl')
+                st.success(f"Данные сохранены в новый файл {EXCEL_FILE}")
+                return True
+            except PermissionError:
+                st.error("Не удалось создать файл Excel. Проверьте, не открыт ли он другой программой.")
+                return False
+            except Exception as e:
+                st.error(f"Ошибка при создании Excel файла: {str(e)}")
+                return False
         
         # Загружаем существующий файл
-        wb = load_workbook(EXCEL_FILE)
-        ws = wb.active
-        
-        # Проверяем, совпадают ли заголовки
-        headers = [cell.value for cell in ws[1]]
-        
-        # Добавляем новую строку
-        row_values = []
-        for header in headers:
-            if header in new_row:
-                row_values.append(new_row[header])
-            else:
-                row_values.append(None)
-        
-        ws.append(row_values)
-        
-        # Сохраняем изменения
-        wb.save(EXCEL_FILE)
-        st.success(f"Данные также сохранены в Excel файл {EXCEL_FILE}")
-        return True
+        max_attempts = 3
+        attempt = 0
+        while attempt < max_attempts:
+            try:
+                wb = load_workbook(EXCEL_FILE)
+                ws = wb.active
+                
+                # Проверяем, совпадают ли заголовки
+                headers = [cell.value for cell in ws[1]]
+                
+                # Добавляем новую строку
+                row_values = []
+                for header in headers:
+                    if header in new_row:
+                        row_values.append(new_row[header])
+                    else:
+                        row_values.append(None)
+                
+                ws.append(row_values)
+                
+                # Сохраняем изменения
+                wb.save(EXCEL_FILE)
+                # Удаляем резервную копию после успешного сохранения
+                if os.path.exists(f"{EXCEL_FILE}.bak"):
+                    try:
+                        os.remove(f"{EXCEL_FILE}.bak")
+                    except:
+                        pass
+                st.success(f"Данные также сохранены в Excel файл {EXCEL_FILE}")
+                return True
+                
+            except PermissionError:
+                attempt += 1
+                if attempt < max_attempts:
+                    st.warning(f"Файл Excel занят. Попытка {attempt} из {max_attempts}...")
+                    import time
+                    time.sleep(1)  # Ждем 1 секунду перед повторной попыткой
+                else:
+                    st.error("Не удалось сохранить в Excel. Файл занят другой программой.")
+                    return False
+            except Exception as e:
+                st.error(f"Ошибка при работе с Excel: {str(e)}")
+                # Восстанавливаем из резервной копии при ошибке
+                if os.path.exists(f"{EXCEL_FILE}.bak"):
+                    try:
+                        import shutil
+                        shutil.copy2(f"{EXCEL_FILE}.bak", EXCEL_FILE)
+                        st.info("Восстановлена резервная копия Excel файла")
+                    except:
+                        pass
+                return False
     except Exception as e:
-        st.error(f"Ошибка при сохранении в Excel: {str(e)}")
+        st.error(f"Критическая ошибка при сохранении в Excel: {str(e)}")
         return False
 
 def save_to_excel(df):
