@@ -420,9 +420,28 @@ elif menu == "Аналитика и статистика":
 elif menu == "Импорт из сообщения":
     st.subheader("Импорт из текстового сообщения")
     msg = st.text_area("Вставьте сообщение со статистикой по смене:", height=400)
+    
+    # Добавим чекбокс для принудительного импорта дубликатов
+    allow_duplicates = st.checkbox("Разрешить дублирование записей с одинаковым учётным номером", value=False)
+    
     if st.button("Импортировать"):
         parsed = parse_import_message(msg)
-        added, errors = 0, 0
+        added, errors, duplicates = 0, 0, 0
+        
+        # Собираем существующие учетные номера для проверки
+        conn = sqlite3.connect(DB_FILE)
+        existing_records = set()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT Учетный_номер FROM {TABLE_NAME}")
+            for row in cursor.fetchall():
+                if row[0]:  # Проверяем, что номер не пустой
+                    existing_records.add(row[0])
+            conn.close()
+        except Exception as e:
+            st.warning(f"Не удалось получить список существующих записей: {str(e)}")
+            conn.close()
+        
         for rec in parsed:
             try:
                 # Получаем дату из распарсенного сообщения (уже в формате DD.MM.YYYY)
@@ -430,6 +449,12 @@ elif menu == "Импорт из сообщения":
                 
                 # Генерация служебных полей
                 uchet = rec.get('Учетный_номер', '')
+                
+                # Проверяем на дублирование
+                if uchet and uchet in existing_records and not allow_duplicates:
+                    st.warning(f"Пропущен дубликат: запись с учётным номером {uchet} уже существует.")
+                    duplicates += 1
+                    continue
                 
                 # Если формат учетного номера правильный, извлекаем из него компоненты для id_plavka
                 if re.match(r'[0-9]{2}-[0-9]{3}/[0-9]{2}', uchet):
@@ -496,12 +521,16 @@ elif menu == "Импорт из сообщения":
                 # Сохраняем в Excel
                 add_to_excel(new_row)
                 
+                # Добавляем новый учетный номер в список существующих
+                if uchet:
+                    existing_records.add(uchet)
+                    
                 added += 1
             except Exception as e:
                 errors += 1
                 st.error(f"Ошибка при добавлении записи с Учетным номером {uchet}: {e}")
         
-        st.success(f"Импортировано записей: {added}. Ошибок: {errors}.")
+        st.success(f"Импортировано записей: {added}. Дубликатов: {duplicates}. Ошибок: {errors}.")
         
         # Очищаем кэш данных
         st.cache_data.clear()
