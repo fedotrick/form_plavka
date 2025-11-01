@@ -143,68 +143,94 @@ def generate_uchet_number(date, num):
 
 def parse_import_message(text):
     # Парсим дату смены из шапки
-    m = re.search(r'📅 ([0-9]{2}\.[0-9]{2}\.[0-9]{4})', text)
+    m = re.search(r'📅 Дата: ([0-9]{2}\.[0-9]{2}\.[0-9]{4})', text)
     plavka_date = m.group(1) if m else ''
+    
     # Парсим старшего смены и участников из шапки
-    m = re.search(r'Старший: ([^\n]+)', text)
+    m = re.search(r'👨‍💼 Старший: ([^\n]+)', text)
     starshiy = m.group(1).strip() if m else ''
-    m = re.search(r'Участники: ([^\n]+)', text)
-    uchastniki = [x.strip() for x in m.group(1).split(',')] if m else []
+    
+    # Парсим участников
+    uchastniki = []
+    participants_match = re.search(r'👥 Участники \(\d+\):([\s\S]*?)(?=\n\n🔥 ДЕТАЛИ ПЛАВОК:|$)', text)
+    if participants_match:
+        participants_text = participants_match.group(1)
+        # Извлекаем имена участников из списка
+        participants = re.findall(r'• ([^\n]+)', participants_text)
+        uchastniki = [p.strip() for p in participants]
+    
     # Разбиваем на блоки по плавкам
-    blocks = re.split(r'📊 Плавка \d+/\d+', text)
+    blocks = re.split(r'\n(?=✅ \d+\. |🔄 \d+\. )', text)
     results = []
+    
     for block in blocks:
-        if 'Маршрутная карта' not in block:
+        if 'Плавка' not in block:
             continue
+            
         data = {}
         # Дата смены для каждой плавки
         data['Плавка_дата'] = plavka_date
-        # Старший смены и участники
+        
+        # Старший смены и участники для каждой плавки
         data['Старший_смены_плавки'] = starshiy
         for i, field in enumerate(['Первый_участник_смены_плавки', 'Второй_участник_смены_плавки', 'Третий_участник_смены_плавки', 'Четвертый_участник_смены_плавки']):
             data[field] = uchastniki[i] if i < len(uchastniki) else ''
+        
+        # Плавка (Учетный номер)
+        m = re.search(r'Плавка ([0-9]+-[0-9]+/[0-9]{2})', block)
+        if m:
+            data['Учетный_номер'] = m.group(1).strip()
+        
         # Маршрутная карта
-        m = re.search(r'Маршрутная карта: (\d+)', block)
+        m = re.search(r'📋 Маршрутная карта: (\d+)', block)
         if m:
-            data['Маршрутная_карта'] = m.group(1)
-        # Учетный номер
-        m = re.search(r'Учетный номер: ([0-9]{2}-[0-9]{3}/[0-9]{2})', block)
-        if m:
-            data['Учетный_номер'] = m.group(1)
+            data['Маршрутная_карта'] = m.group(1).strip()
+        
         # Кластер
-        m = re.search(r'Кластер: ([^\n]+)', block)
+        m = re.search(r'🏷️ Кластер: ([^\n]+)', block)
         if m:
-            data['Номер_кластера'] = m.group(1)
-        # Отливка
-        m = re.search(r'Отливка: ([^\n]+)', block)
+            data['Номер_кластера'] = m.group(1).strip()
+        
+        # Наименование отливки
+        m = re.search(r'🏭 Отливка: ([^\n]+)', block)
         if m:
-            data['Наименование_отливки'] = m.group(1)
-        # Литниковая система
-        m = re.search(r'Литниковая система: ([^\n]+)', block)
+            data['Наименование_отливки'] = m.group(1).strip()
+        
+        # Тип эксперимента (Литниковая система)
+        m = re.search(r'⚙️ Литниковая система: ([^\n]+)', block)
         if m:
-            data['Тип_эксперемента'] = m.group(1)
+            data['Тип_эксперемента'] = m.group(1).strip()
+        
         # Опоки
-        m = re.search(r'Опоки: ([^\n]+)', block)
+        m = re.search(r'📦 Опоки:\s*([^\n]+)', block)
         opoki = []
         if m:
             opoki = [x.strip().replace('Опока №', '') for x in m.group(1).split(',')]
             opoki = [str(int(o)) if o.isdigit() or (o.replace('.','',1).isdigit() and float(o).is_integer()) else o for o in opoki]
+        
         # Температура
-        m = re.search(r'Температура: ([0-9]+[.,]?[0-9]*)', block)
-        temp = float(m.group(1).replace(',', '.')) if m else None
-        # Время слива
-        m = re.search(r'Время слива: ([0-9]{2}:[0-9]{2})', block)
-        time_val = m.group(1) if m else ''
+        m = re.search(r'🌡️ Температура: ([0-9]+[.,]?[0-9]*)', block)
+        temp = float(m.group(1).replace(',', '.').replace('°C', '')) if m else None
+        
+        # Время заливки
+        m = re.search(r'⏰ Время заливки: ([0-9]{2}:[0-9]{2})', block)
+        time_val = m.group(1).strip() if m else ''
+        
+        # Комментарий
+        m = re.search(r'💬 Комментарий: ([^\n]+)', block)
+        comment = m.group(1).strip() if m else ''
         
         # Установка общего времени заливки
         data['Плавка_время_заливки'] = time_val
+        
+        # Установка комментария
+        data['Комментарий'] = comment
         
         # Заполняем сектора (опоки и температуры)
         for i, sector in enumerate(['A', 'B', 'C', 'D']):
             if i < len(opoki):
                 data[f'Сектор_{sector}_опоки'] = opoki[i]
                 data[f'Плавка_температура_заливки_{sector}'] = temp
-                # НЕ заполняем индивидуальные времена для секторов
             else:
                 data[f'Сектор_{sector}_опоки'] = ''
                 data[f'Плавка_температура_заливки_{sector}'] = None
@@ -451,7 +477,7 @@ elif menu == "Импорт из сообщения":
                 uchet = rec.get('Учетный_номер', '')
                 
                 # Проверяем на дублирование
-                if uchet and uchet in existing_records and not allow_duplicates:
+                if uchet and uchet in existing_records and not allow_duplicates and uchet:
                     st.warning(f"Пропущен дубликат: запись с учётным номером {uchet} уже существует.")
                     duplicates += 1
                     continue
@@ -459,7 +485,7 @@ elif menu == "Импорт из сообщения":
                 # Если формат учетного номера правильный, извлекаем из него компоненты для id_plavka
                 if re.match(r'[0-9]{2}-[0-9]{3}/[0-9]{2}', uchet):
                     mm, nnn_yy = uchet.split('-')
-                    nnn, yy = nnn_yy.split('/')
+                    nnn, yy = nnn_yy.split('/') # nnn может быть разной длины
                     year = int('20' + yy)
                     month = int(mm)
                     id_plavka = f"{year}{month:02d}{nnn}"
@@ -469,7 +495,7 @@ elif menu == "Импорт из сообщения":
                     if plavka_date and re.match(r'[0-9]{2}\.[0-9]{2}\.[0-9]{4}', plavka_date):
                         day, month, year = map(int, plavka_date.split('.'))
                         # Генерируем случайный номер плавки, если его нет
-                        nnn = "001"  # Можно заменить на логику из вашего приложения
+                        nnn = "000"  # Неизвестный номер
                         id_plavka = f"{year}{month:02d}{nnn}"
                         номер_плавки = f"{month}-{nnn}"
                     else:
@@ -499,6 +525,7 @@ elif menu == "Импорт из сообщения":
                     'Плавка_температура_заливки_D': rec.get('Плавка_температура_заливки_D', None),
                     'Плавка_время_заливки': rec.get('Плавка_время_заливки', ''),
                     'Маршрутная_карта': rec.get('Маршрутная_карта', ''),
+                    'Комментарий': rec.get('Комментарий', ''),
                 }
                 
                 # Сохраняем в SQLite
